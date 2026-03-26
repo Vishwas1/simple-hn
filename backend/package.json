@@ -7,11 +7,13 @@
   "scripts": {
     "dev": "tsx watch src/index.ts",
     "build": "npm run lint && npm run format && tsc -p tsconfig.json",
+    "check": "npm run lint && npm run format:check && tsc -p tsconfig.json --noEmit",
     "start": "node dist/index.js",
     "lint": "eslint \"src/**/*.{ts,js}\"",
     "lint:fix": "eslint \"src/**/*.{ts,js}\" --fix",
     "format": "prettier --write \"src/**/*.{ts,js,json,md}\" \"tsconfig.json\" \"package.json\"",
-    "format:check": "prettier --check \"src/**/*.{ts,js,json,md}\" \"tsconfig.json\" \"package.json\""
+    "format:check": "prettier --check \"src/**/*.{ts,js,json,md}\" \"tsconfig.json\" \"package.json\"",
+    "prepare": "husky"
   },
   "dependencies": {
     "dotenv": "^16.4.5",
@@ -28,6 +30,7 @@
     "eslint": "^8.57.1",
     "eslint-config-prettier": "^9.1.0",
     "eslint-plugin-prettier": "^5.2.1",
+    "husky": "^9.1.7",
     "pino-pretty": "^11.2.2",
     "prettier": "^3.4.2",
     "tsx": "^4.16.2",

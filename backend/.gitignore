@@ -19,3 +19,6 @@ logs/
 # TypeScript cache
 *.tsbuildinfo
 
+# Husky internals (generated at install time)
+.husky/_/
+

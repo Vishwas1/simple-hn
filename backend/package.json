@@ -1,0 +1,37 @@
+{
+  "name": "simple-hn-backend",
+  "private": true,
+  "version": "0.1.0",
+  "type": "commonjs",
+  "main": "dist/index.js",
+  "scripts": {
+    "dev": "tsx watch src/index.ts",
+    "build": "tsc -p tsconfig.json",
+    "start": "node dist/index.js",
+    "lint": "eslint \"src/**/*.{ts,js}\"",
+    "lint:fix": "eslint \"src/**/*.{ts,js}\" --fix",
+    "format": "prettier --write \"src/**/*.{ts,js,json,md}\" \"tsconfig.json\" \"package.json\"",
+    "format:check": "prettier --check \"src/**/*.{ts,js,json,md}\" \"tsconfig.json\" \"package.json\""
+  },
+  "dependencies": {
+    "dotenv": "^16.4.5",
+    "express": "^4.19.2",
+    "pino": "^9.3.2",
+    "pino-http": "^10.2.0",
+    "zod": "^3.23.8"
+  },
+  "devDependencies": {
+    "@typescript-eslint/eslint-plugin": "^8.18.0",
+    "@typescript-eslint/parser": "^8.18.0",
+    "@types/express": "^4.17.21",
+    "@types/node": "^20.14.10",
+    "eslint": "^8.57.1",
+    "eslint-config-prettier": "^9.1.0",
+    "eslint-plugin-prettier": "^5.2.1",
+    "pino-pretty": "^11.2.2",
+    "prettier": "^3.4.2",
+    "tsx": "^4.16.2",
+    "typescript": "^5.5.4"
+  }
+}
+

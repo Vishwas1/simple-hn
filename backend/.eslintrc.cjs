@@ -1,0 +1,28 @@
+module.exports = {
+  root: true,
+  env: {
+    node: true,
+    es2022: true
+  },
+  parser: '@typescript-eslint/parser',
+  parserOptions: {
+    ecmaVersion: 'latest',
+    sourceType: 'script'
+  },
+  plugins: ['@typescript-eslint', 'prettier'],
+  extends: [
+    'eslint:recommended',
+    'plugin:@typescript-eslint/recommended',
+    'plugin:prettier/recommended'
+  ],
+  ignorePatterns: ['dist/', 'node_modules/'],
+  rules: {
+    // Allow `console.*` (useful for server logging and quick debugging).
+    'no-console': 'off',
+    '@typescript-eslint/no-unused-vars': [
+      'error',
+      { argsIgnorePattern: '^_' }
+    ]
+  }
+};
+

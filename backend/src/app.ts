@@ -1,6 +1,8 @@
 import express from 'express';
 import { httpLogger } from './logger';
 import { healthRouter } from './routes/health';
+// import { agentRouter } from './routes/agent';
+import { weatherAgentRouter } from './weather/routes/agent';
 
 export function createApp() {
   const app = express();
@@ -13,6 +15,8 @@ export function createApp() {
   });
 
   app.use('/api/v1', healthRouter);
+  // app.use('/api/v1', agentRouter);
+  app.use('/api/v1/weather', weatherAgentRouter);
 
   // Basic 404 handler.
   app.use((_req, res) => {

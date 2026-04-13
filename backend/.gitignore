@@ -22,3 +22,7 @@ logs/
 # Husky internals (generated at install time)
 .husky/_/
 
+# file processing
+pending
+done
+processing

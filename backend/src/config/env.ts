@@ -15,12 +15,16 @@ const EnvSchema = z.object({
   // Anthropic
   ANTHROPIC_API_KEY: z.string().optional(),
   ANTHROPIC_MODEL: z.string().default('claude-3-5-sonnet-latest'),
-  // OpenAI
+  // OpenAIp
   OPENAI_API_KEY: z.string().optional(),
   OPENAI_MODEL: z.string().default('gpt-5-nano'),
   // Ollama
   OLLAMA_MODEL: z.string().default('llama3.1'),
   OLLAMA_BASE_URL: z.string().default('http://localhost:11434'),
+
+  // HuggingFace
+  HUGGINGFACEHUB_API_KEY: z.string().optional(),
+  HUGGINGFACE_MODEL: z.string().default('meta-llama/Llama-3.2-3B-Instruct'),
 });
 
 export type Env = z.infer<typeof EnvSchema>;

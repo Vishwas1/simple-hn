@@ -3,7 +3,7 @@ import { env } from '../../config/env';
 import { createAgent, DynamicStructuredTool, ReactAgent } from 'langchain'; // Standard v0.3+ entry point
 import { BaseChatModel } from '@langchain/core/language_models/chat_models';
 
-export type LLMProvider = 'anthropic' | 'openai' | 'ollama';
+export type LLMProvider = 'anthropic' | 'openai' | 'ollama' | 'huggingface';
 
 function requireOrThrow(moduleName: string): any {
   try {
@@ -49,13 +49,25 @@ function getaLLMModelBasedOnAProvider({ provider }: { provider: LLMProvider }) {
       break;
     }
 
+    case 'huggingface': {
+      const { HuggingFaceInference } = requireOrThrow('@langchain/community/llms/hf');
+
+      model = new HuggingFaceInference({
+        model: env.HUGGINGFACE_MODEL, // Or any model on the Hub
+        apiKey: env.HUGGINGFACEHUB_API_KEY,
+        temperature: 0,
+        maxTokens: 500,
+      });
+      break;
+    }
+
     default: {
       const { ChatOllama } = requireOrThrow('@langchain/ollama');
 
       model = new ChatOllama({
-        model: env.OLLAMA_MODEL, // Ensure you pulled this in terminal
-        temperature: 0,
-        baseUrl: env.OLLAMA_BASE_URL, // Default Ollama port
+        baseUrl: 'http://192.168.1.2:11434', // Default Ollama port
+        model: 'gpt-oss:20b', // Ensure you pulled this in terminal
+        verbose: true,
       });
     }
   }

@@ -1,0 +1,44 @@
+In my database 
+
+I have two tables
+
+1 documents 
+
+create table public.documents (
+  id uuid not null default gen_random_uuid (),
+  title text null,
+  metadata jsonb null,
+  created_at timestamp without time zone null default now(),
+  constraint documents_pkey primary key (id)
+) TABLESPACE pg_default;
+
+sample metadata in document table
+
+{
+  "size": "0.59 MB",
+  "created": "Sun, 29 Mar 2026 09:06:00 GMT",
+  "filename": "ARC-Standardising WalletConnect Namespace for Concordium ID Proofs-290326-143245.pdf",
+  "pageNumber": 1,
+  "totalPages": 6
+}
+
+2 embedding tables 
+
+create table public.embeddings (
+  id uuid not null default gen_random_uuid (),
+  document_id uuid null,
+  content text null,
+  embedding public.vector null,
+  metadata jsonb null,
+  created_at timestamp without time zone null default now(),
+  content_hash text null,
+  constraint embeddings_pkey primary key (id),
+  constraint embeddings_content_hash_key unique (content_hash),
+  constraint embeddings_document_id_fkey foreign KEY (document_id) references documents (id) on delete CASCADE
+) TABLESPACE pg_default;
+
+
+sample metadata in embedding table: 
+{
+  "pageNumber": 126
+}

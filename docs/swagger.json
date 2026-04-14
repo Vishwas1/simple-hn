@@ -1,0 +1,98 @@
+{
+  "openapi": "3.1.0",
+  "info": {
+    "title": "Concordium Brain API",
+    "version": "1.0.0"
+  },
+  "servers": [
+    {
+      "url": "https://zohybozkprtltzsijyyi.supabase.co/functions/v1"
+    }
+  ],
+  "paths": {
+    "/ingest": {
+      "post": {
+        "operationId": "ingest_document",
+        "summary": "Ingest document into knowledge base",
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "title": { "type": "string" },
+                  "content": { "type": "string" }
+                },
+                "required": ["content"]
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Document ingested"
+          }
+        }
+      }
+    },
+    "/query-brain": {
+      "post": {
+        "operationId": "query_brain",
+        "summary": "Search knowledge base",
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                    "question": { "type": "string" },
+                    "source_types": {
+                        "type": "array",
+                        "items": {
+                            "type": "string",
+                            "enum": ["docs", "website", "paper", "confluence"]
+                        }
+                    }
+                },
+                "required": ["question"]
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Search results"
+          }
+        }
+      }
+    },
+    "/save-memory": {
+      "post": {
+        "operationId": "save_memory",
+        "summary": "Save Q&A memory",
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "question": { "type": "string" },
+                  "answer": { "type": "string" }
+                },
+                "required": ["question", "answer"]
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Memory saved"
+          }
+        }
+      }
+    }
+  }
+}

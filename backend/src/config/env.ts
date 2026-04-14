@@ -7,7 +7,7 @@ dotenv.config();
 const EnvSchema = z.object({
   NODE_ENV: z.enum(['development', 'test', 'production']).default('development'),
   PORT: z.coerce.number().int().positive().default(3001),
-  LOG_LEVEL: z.string().default('info'),
+  LOG_LEVEL: z.string().default('debug'),
   LOG_PRETTY: z.coerce.boolean().default(true),
 
   // Agent/LLM configuration
@@ -25,6 +25,11 @@ const EnvSchema = z.object({
   // HuggingFace
   HUGGINGFACEHUB_API_KEY: z.string().optional(),
   HUGGINGFACE_MODEL: z.string().default('meta-llama/Llama-3.2-3B-Instruct'),
+
+  // Supabase
+  SUPABASE_QUERYBRAIN_URL: z.string().optional(),
+  SUPABASE_API_KEY: z.string().optional(),
+  SUPABASE_ACCESS_TOKEN: z.string().optional(),
 });
 
 export type Env = z.infer<typeof EnvSchema>;

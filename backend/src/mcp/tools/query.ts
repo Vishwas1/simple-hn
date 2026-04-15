@@ -2,7 +2,8 @@
 
 import fetch from 'node-fetch';
 import { z } from 'zod';
-import { mcpServer } from '../server.js';
+// import { mcpServer } from '../server.js';
+import { McpServer } from '@modelcontextprotocol/sdk/server/mcp.js';
 import { formatEvidence } from './formatEvidence.js';
 import { env } from '../../config/env.js';
 
@@ -56,34 +57,36 @@ const InputSchema = z.object({
 });
 type Input = z.infer<typeof InputSchema>;
 
-mcpServer.registerTool(
-  'query_brain',
-  {
-    title: 'Query Brain',
-    description: 'Search the Concordium knowledge base and return structured evidence',
-    inputSchema: InputSchema,
-  },
-  async (args: Input) => {
-    console.error('Received query_brain request with args:', args);
-    console.error('Using QUERY_API_URL:', QUERY_API_URL);
-    console.error('Using ACCESS_TOKEN:', !!ACCESS_TOKEN);
-    console.error('Using API_KEY:', !!API_KEY);
+export function registerQueryTool(mcpServerInstance: McpServer) {
+  mcpServerInstance.registerTool(
+    'query_brain',
+    {
+      title: 'Query Brain',
+      description: 'Search the Concordium knowledge base and return structured evidence',
+      inputSchema: InputSchema,
+    },
+    async (args: Input) => {
+      console.error('Received query_brain request with args:', args);
+      console.error('Using QUERY_API_URL:', QUERY_API_URL);
+      console.error('Using ACCESS_TOKEN:', !!ACCESS_TOKEN);
+      console.error('Using API_KEY:', !!API_KEY);
 
-    const { question, mode } = args;
-    const finalSourceTypes = getSourceTypes(mode);
-    const data = await makeNWSRequest(QUERY_API_URL, {
-      question,
-      source_types: finalSourceTypes,
-    });
-    const formatted = formatEvidence(data, mode);
+      const { question, mode } = args;
+      const finalSourceTypes = getSourceTypes(mode);
+      const data = await makeNWSRequest(QUERY_API_URL, {
+        question,
+        source_types: finalSourceTypes,
+      });
+      const formatted = formatEvidence(data, mode);
 
-    return {
-      content: [
-        {
-          type: 'text',
-          text: formatted,
-        },
-      ],
-    };
-  },
-);
+      return {
+        content: [
+          {
+            type: 'text',
+            text: formatted,
+          },
+        ],
+      };
+    },
+  );
+}

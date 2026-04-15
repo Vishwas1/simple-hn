@@ -1,22 +1,23 @@
-import { mcpServer } from '../server.js';
+import { McpServer } from '@modelcontextprotocol/sdk/server/mcp';
 import { z } from 'zod';
 
-mcpServer.registerPrompt(
-  'business_answer',
-  {
-    title: 'Business Answer',
-    description: 'High-level business explanation',
-    argsSchema: {
-      question: z.string(),
+export function registerPrompts(mcpServerInstance: McpServer) {
+  mcpServerInstance.registerPrompt(
+    'business_answer',
+    {
+      title: 'Business Answer',
+      description: 'High-level business explanation',
+      argsSchema: {
+        question: z.string(),
+      },
     },
-  },
-  ({ question }) => ({
-    messages: [
-      {
-        role: 'user',
-        content: {
-          type: 'text',
-          text: `
+    ({ question }) => ({
+      messages: [
+        {
+          role: 'user',
+          content: {
+            type: 'text',
+            text: `
 You are a Concordium business assistant.
 
 IMPORTANT:
@@ -41,28 +42,28 @@ Respond: "I don’t have enough information in the knowledge base."
 Question:
 ${question}
           `,
+          },
         },
-      },
-    ],
-  }),
-);
+      ],
+    }),
+  );
 
-mcpServer.registerPrompt(
-  'developer_answer',
-  {
-    title: 'Developer Answer',
-    description: 'Answer with technical depth and implementation details',
-    argsSchema: {
-      question: z.string(),
+  mcpServerInstance.registerPrompt(
+    'developer_answer',
+    {
+      title: 'Developer Answer',
+      description: 'Answer with technical depth and implementation details',
+      argsSchema: {
+        question: z.string(),
+      },
     },
-  },
-  ({ question }) => ({
-    messages: [
-      {
-        role: 'user',
-        content: {
-          type: 'text',
-          text: `
+    ({ question }) => ({
+      messages: [
+        {
+          role: 'user',
+          content: {
+            type: 'text',
+            text: `
 You are a Concordium developer assistant.
 
 IMPORTANT:
@@ -89,8 +90,9 @@ Respond: "I don’t have enough information in the knowledge base."
 Question:
 ${question}
           `,
+          },
         },
-      },
-    ],
-  }),
-);
+      ],
+    }),
+  );
+}

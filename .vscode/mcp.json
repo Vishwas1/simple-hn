@@ -1,0 +1,13 @@
+{
+	"servers": {
+		"my-mcp-server-dev": {
+			"type": "stdio",
+			"command": "/Users/hermit/.nvm/versions/node/v20.19.2/bin/node",
+			"args": [
+				"dist/mcp/index.js"
+			],
+			"cwd": "${workspaceFolder}/backend"
+		},
+	},
+	"inputs": []
+}

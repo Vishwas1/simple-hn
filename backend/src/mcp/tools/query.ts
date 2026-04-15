@@ -4,10 +4,11 @@ import fetch from 'node-fetch';
 import { z } from 'zod';
 import { mcpServer } from '../server.js';
 import { formatEvidence } from './formatEvidence.js';
+import { env } from '../../config/env.js';
 
-const QUERY_API_URL = process.env.SUPABASE_QUERYBRAIN_URL!;
-const API_KEY = process.env.SUPABASE_API_KEY!;
-const ACCESS_TOKEN = process.env.SUPABASE_ACCESS_TOKEN!;
+const QUERY_API_URL = env.SUPABASE_QUERYBRAIN_URL!;
+const API_KEY = env.SUPABASE_API_KEY!;
+const ACCESS_TOKEN = env.SUPABASE_ACCESS_TOKEN!;
 
 type SoruceTypes = 'docs' | 'website' | 'paper' | 'confluence';
 function getSourceTypes(
@@ -63,6 +64,11 @@ mcpServer.registerTool(
     inputSchema: InputSchema,
   },
   async (args: Input) => {
+    console.error('Received query_brain request with args:', args);
+    console.error('Using QUERY_API_URL:', QUERY_API_URL);
+    console.error('Using ACCESS_TOKEN:', !!ACCESS_TOKEN);
+    console.error('Using API_KEY:', !!API_KEY);
+
     const { question, mode } = args;
     const finalSourceTypes = getSourceTypes(mode);
     // const res = await fetch(QUERY_API_URL, {

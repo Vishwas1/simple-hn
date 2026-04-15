@@ -71,30 +71,10 @@ mcpServer.registerTool(
 
     const { question, mode } = args;
     const finalSourceTypes = getSourceTypes(mode);
-    // const res = await fetch(QUERY_API_URL, {
-    //   method: 'POST',
-    //   headers: {
-    //     'Content-Type': 'application/json',
-    //     Authorization: `Bearer ${ACCESS_TOKEN}`,
-    //     apikey: API_KEY,
-    //   },
-    //   body: JSON.stringify({
-    //     question,
-    //     source_types: finalSourceTypes,
-    //   }),
-    // });
     const data = await makeNWSRequest(QUERY_API_URL, {
       question,
       source_types: finalSourceTypes,
     });
-
-    // if (!res.ok) {
-    //   const text = await res.text();
-    //   throw new Error(`query_brain failed: ${text}`);
-    // }
-
-    // const data = await res.json(); // ✅ FIX
-
     const formatted = formatEvidence(data, mode);
 
     return {

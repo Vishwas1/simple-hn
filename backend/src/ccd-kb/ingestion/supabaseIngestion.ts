@@ -1,11 +1,11 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
 import fetch from 'node-fetch';
+import { env } from '../../config/env.js';
 
-const INGEST_API_URL = 'https://zohybozkprtltzsijyyi.supabase.co/functions/v1/ingest'; // Update with your actual API URL
-const INSERT_DOCUMENT_API_URL =
-  'https://zohybozkprtltzsijyyi.supabase.co/functions/v1/create-document'; // Update with your actual API URL
-const API_KEY = 'sb_publishable_D1uyhi2guDMbcg0tPDJs-A_8dim5jk7';
-const ACCESS_TOKEN = 'sb_publishable_D1uyhi2guDMbcg0tPDJs-A_8dim5jk7';
+const INGEST_API_URL = env.SUPABASE_INGEST_URL;
+const INSERT_DOCUMENT_API_URL = env.SUPABASE_INSERT_DOCUMENT_URL;
+const API_KEY = env.SUPABASE_API_KEY;
+const ACCESS_TOKEN = env.SUPABASE_ACCESS_TOKEN;
 
 export type Chunk = {
   title: string;
@@ -56,6 +56,9 @@ export async function ingestChunk(chunk: ChunkWithDocumentId): Promise<IngestChu
   // console.log(
   //   `Ingesting chunk for title: ${chunk.title}, metadata: ${JSON.stringify(chunk.metadata)}`,
   // );
+  if (!INGEST_API_URL) {
+    throw new Error('SUPABASE_INGEST_URL is not defined in environment variables');
+  }
   const res = await fetch(INGEST_API_URL, {
     method: 'POST',
     headers: {
@@ -87,6 +90,9 @@ export async function insertDocument(
 ): Promise<CreateDocumentResponse> {
   // console.log(`Ingesting chunk for title: ${title}, page: ${metadata.pageNumber || 'N/A'}`);
   console.log(`Ingesting chunk for title: ${title}`);
+  if (!INSERT_DOCUMENT_API_URL) {
+    throw new Error('SUPABASE_INSERT_DOCUMENT_URL is not defined in environment variables');
+  }
   const res = await fetch(INSERT_DOCUMENT_API_URL, {
     method: 'POST',
     headers: {

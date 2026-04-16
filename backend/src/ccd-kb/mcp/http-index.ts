@@ -1,7 +1,7 @@
 import http from 'node:http';
 import { getMcpServer } from './server.js';
 import { StreamableHTTPServerTransport } from '@modelcontextprotocol/sdk/server/streamableHttp.js';
-import { env } from '../config/env.js';
+import { env } from '../../config/env.js';
 // const mcpServer = getMcpServer();
 
 async function main() {

@@ -4,7 +4,7 @@
 			"type": "stdio",
 			"command": "/Users/hermit/.nvm/versions/node/v20.19.2/bin/node",
 			"args": [
-				"dist/mcp/index.js"
+				"dist/ccd-kb/mcp/stdio-index.js"
 			],
 			"cwd": "${workspaceFolder}/backend"
 		},

@@ -1,9 +1,9 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
 import OpenAI from 'openai';
 import fetch from 'node-fetch';
-import { logger } from '../logger';
-import { env } from '../config/env';
-import { SYSTEM_PROMPT } from './openAiPrompt';
+import { logger } from '../../logger';
+import { env } from '../../config/env';
+import { SYSTEM_PROMPT } from '../prompts/ccdKbPrompt';
 
 const QUERY_API_URL = env.SUPABASE_QUERYBRAIN_URL;
 const API_KEY = env.SUPABASE_API_KEY;

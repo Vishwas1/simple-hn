@@ -2,10 +2,9 @@
 
 import fetch from 'node-fetch';
 import { z } from 'zod';
-// import { mcpServer } from '../server.js';
 import { McpServer } from '@modelcontextprotocol/sdk/server/mcp.js';
 import { formatEvidence } from './formatEvidence.js';
-import { env } from '../../config/env.js';
+import { env } from '../../../config/env.js';
 
 const QUERY_API_URL = env.SUPABASE_QUERYBRAIN_URL!;
 const API_KEY = env.SUPABASE_API_KEY!;

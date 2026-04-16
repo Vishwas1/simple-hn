@@ -30,15 +30,6 @@ ingestionRouter.post('/website', async (_req, res) => {
 
 ingestionRouter.post('/pdf', async (_req, res) => {
   try {
-    // const { document_id, websiteUrl, allowedPaths } = _req.body;
-    // implement validation for these params
-    // if (!document_id || !websiteUrl) {
-    //   res.status(400).json({
-    //     ok: false,
-    //     error: 'Missing required parameters: document_id and websiteUrl',
-    //   });
-    //   return;
-    // }
     const result = await runPdfIngestion();
     res.status(200).json(result);
   } catch (error: unknown) {

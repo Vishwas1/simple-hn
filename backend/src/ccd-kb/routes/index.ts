@@ -1,6 +1,10 @@
 import { Router } from 'express';
 import ConcordiumKnowledgeBaseAgent from '../agent';
+import { ingestionRouter } from './ingestion';
+
 export const ccdKBAgentRouter = Router();
+
+ccdKBAgentRouter.use('/ingest', ingestionRouter);
 
 ccdKBAgentRouter.post('/agent', async (req, res) => {
   const questionParam = req.body.question;

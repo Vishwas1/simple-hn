@@ -28,6 +28,8 @@ const EnvSchema = z.object({
 
   // Supabase
   SUPABASE_QUERYBRAIN_URL: z.string().optional(),
+  SUPABASE_INGEST_URL: z.string().optional(),
+  SUPABASE_INSERT_DOCUMENT_URL: z.string().optional(),
   SUPABASE_API_KEY: z.string().optional(),
   SUPABASE_ACCESS_TOKEN: z.string().optional(),
 });

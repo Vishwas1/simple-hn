@@ -1,3 +1,4 @@
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
 import { DynamicStructuredTool } from 'langchain';
 import {
   createToolCallingAgentExecutor,
@@ -21,12 +22,12 @@ export class BaseAgent implements IBaseAgent {
   }
 
   private coerceAnswer(result: unknown): string {
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     const r = result as any;
     if (typeof r === 'string') return r;
     if (typeof r?.output === 'string') return r.output;
     if (typeof r?.text === 'string') return r.text;
     return JSON.stringify(r, null, 2);
+    // return this.formatLangchainResult(result);
   }
 
   async answersQuestion(question: string): Promise<string> {
@@ -36,7 +37,7 @@ export class BaseAgent implements IBaseAgent {
       systemPrompt: this.systemPrompt,
     });
 
-    const result: unknown = await executor.invoke({
+    const result = await executor.invoke({
       messages: [{ role: 'human', content: question }],
     });
 

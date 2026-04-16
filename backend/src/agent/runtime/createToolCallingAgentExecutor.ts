@@ -2,28 +2,17 @@
 import { env } from '../../config/env';
 import { createAgent, DynamicStructuredTool, ReactAgent } from 'langchain'; // Standard v0.3+ entry point
 import { BaseChatModel } from '@langchain/core/language_models/chat_models';
+import { ChatOpenAI } from '@langchain/openai';
+import { ChatAnthropic } from '@langchain/anthropic';
+import { ChatOllama } from '@langchain/ollama';
 
 export type LLMProvider = 'anthropic' | 'openai' | 'ollama' | 'huggingface';
-
-function requireOrThrow(moduleName: string): any {
-  try {
-    // eslint-disable-next-line @typescript-eslint/no-var-requires, @typescript-eslint/no-require-imports
-    return require(moduleName);
-  } catch (e) {
-    console.error(`Error loading module ${moduleName}:`, e);
-    throw new Error(
-      `Missing dependency: ${moduleName}. Run "npm i" in backend/ to install LangChain packages.`,
-    );
-  }
-}
 
 function getaLLMModelBasedOnAProvider({ provider }: { provider: LLMProvider }) {
   let model: BaseChatModel;
 
   switch (provider) {
     case 'anthropic': {
-      const { ChatAnthropic } = requireOrThrow('@langchain/anthropic');
-
       if (!env.ANTHROPIC_API_KEY) {
         throw new Error('ANTHROPIC_API_KEY is required for Claude.');
       }
@@ -36,34 +25,18 @@ function getaLLMModelBasedOnAProvider({ provider }: { provider: LLMProvider }) {
     }
 
     case 'openai': {
-      const { ChatOpenAI } = requireOrThrow('@langchain/openai');
-
       if (!env.OPENAI_API_KEY) {
         throw new Error('OPENAI_API_KEY is required for OpenAI.');
       }
 
       model = new ChatOpenAI({
         modelName: env.OPENAI_MODEL,
-        temperature: 0,
-      });
-      break;
-    }
-
-    case 'huggingface': {
-      const { HuggingFaceInference } = requireOrThrow('@langchain/community/llms/hf');
-
-      model = new HuggingFaceInference({
-        model: env.HUGGINGFACE_MODEL, // Or any model on the Hub
-        apiKey: env.HUGGINGFACEHUB_API_KEY,
-        temperature: 0,
-        maxTokens: 500,
+        temperature: 1,
       });
       break;
     }
 
     default: {
-      const { ChatOllama } = requireOrThrow('@langchain/ollama');
-
       model = new ChatOllama({
         baseUrl: 'http://192.168.1.2:11434', // Default Ollama port
         model: 'gpt-oss:20b', // Ensure you pulled this in terminal

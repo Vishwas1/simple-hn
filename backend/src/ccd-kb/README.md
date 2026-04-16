@@ -1,4 +1,4 @@
-# Concordium Knowledge Base  
+# Concordium Knowledge Base
 
 Concordium has developed a rich and highly specialized body of knowledge spanning multiple domains, including cryptographic research, protocol design, developer tooling, product documentation, and ecosystem-level information. This knowledge is distributed across several sources such as whitepapers, technical documentation, internal Confluence pages, official websites, and code repositories.
 
@@ -7,15 +7,19 @@ Historically, this knowledge has been operationalized through domain experts—i
 To address this gap, we propose building a Concordium Knowledge Base Agent—an AI-powered system that consolidates institutional knowledge and enables accurate, source-grounded, and cross-domain question answering. The system will leverage Retrieval-Augmented Generation (RAG) to provide reliable answers backed by Concordium’s own documents, with precise citations to original sources such as page numbers, URLs, and code references.
 
 # Problem Statement
+
 Concordium currently faces a knowledge accessibility and continuity challenge driven by the following factors:
+
 - **Fragmented Knowledge Sources:** Critical knowledge is distributed across multiple systems: Whitepaper and Bluepaper (PDFs), Developer documentation (docs.concordium.com), Official website (concordium.com), Internal Confluence pages, GitHub repositories (e.g., concordium-base)
 - **Loss of Domain Expertise:** Previously, domain experts served as the bridge between these knowledge sources and users.With reduced team size: Queries remain unanswered or delayed, Cross-domain understanding is weakened, Institutional knowledge becomes harder to access
-- **Inefficient Knowledge Retrieval**: Current methods rely on: manual search across multiple platforms, tribal knowledge, context-dependent interpretation. This results in: increased time to resolution, inconsistent answers, duplication of effort. 
+- **Inefficient Knowledge Retrieval**: Current methods rely on: manual search across multiple platforms, tribal knowledge, context-dependent interpretation. This results in: increased time to resolution, inconsistent answers, duplication of effort.
 
-# Solution 
+# Solution
+
 We propose building a domain-aware, source-grounded AI knowledge agent powered by a Retrieval-Augmented Generation (RAG) architecture.
 
 The **Concordium Knowledge Base Agent** will:
+
 - ingest and index all relevant knowledge sources
 - retrieve context intelligently based on query intent
 - generate answers grounded strictly in Concordium content
@@ -25,26 +29,28 @@ The **Concordium Knowledge Base Agent** will:
 > The Concordium Knowledge Base Agent acts as a **scalable**, **always-available domain expert**, capable of answering scientific, technical, product, and implementation queries with precise, source-backed accuracy.
 
 ## Core Capabilities
+
 - Unified Knowledge Access
 - Domain-Aware Question Understanding: scientific/protocol, developer/how-to, code/implementation, product/business
 - Precise Source Attribution
 - Continuous Knowledge Updates
 
 ## Impact
+
 - Faster Decision Making: Reduces time to find accurate, cross-domain information by providing a unified, queryable knowledge layer.
 - Increased Developer Productivity: Enables developers to quickly access commands, implementation details, and documentation without manual search across multiple systems.
 - Foundation for Specialized AI Agents (MCP-Compatible Knowledge Layer): The knowledge base can be exposed as a Model Context Protocol (MCP) server, allowing it to act as a centralized context provider for future specialized agents
 
-## Ingestion  
+## Ingestion
 
 ### Sources
 
-- Whitepaper & Bluepaper 
-- Official website  - concordium.com 
+- Whitepaper & Bluepaper
+- Official website - concordium.com
 - Official document - docs.concordium.com
 - Code Repo [Out of scope]
 
-#### Strategy for PDF - Whitepaper, Bluepaper etc. 
+#### Strategy for PDF - Whitepaper, Bluepaper etc.
 
 You are converting the PDF into a structured knowledge object:
 
@@ -63,6 +69,7 @@ Each chunk must retain:
 - semantic boundaries
 
 Final Chunk Object:
+
 ```
 {
   "chunk_id": "wp_sec4_2_chunk3",
@@ -81,7 +88,7 @@ Final Chunk Object:
 
 Tool: pdfjs-dist
 
-#### Strategy for concordium.com website 
+#### Strategy for concordium.com website
 
 Each website page becomes:
 
@@ -95,8 +102,8 @@ Page (URL)
 
 Tool: playwright
 
-
 Final Chunk Object:
+
 ```
 {
   "chunk_id": "web_identity_benefits_1",
@@ -111,7 +118,7 @@ Final Chunk Object:
 }
 ```
 
-#### Strategy for docs.concordium.com 
+#### Strategy for docs.concordium.com
 
 Each doc page becomes:
 
@@ -146,7 +153,7 @@ Final Chunk Object:
 
 ```
 
-#### Stragey for Code base [Out of Scope for this version] 
+#### Stragey for Code base [Out of Scope for this version]
 
 ```
 Repo
@@ -158,7 +165,6 @@ Repo
 ```
 
 Tool: Tree-sitter
-
 
 ```
 {
@@ -177,7 +183,7 @@ Tool: Tree-sitter
 }
 ```
 
-## Retrieval and Answering 
+## Retrieval and Answering
 
 **Pipeline 1 → “Find the truth”**
 
@@ -272,7 +278,6 @@ The identity framework enables...
 
 #### Strict Prompt Design
 
-
 ```
 You are a Concordium knowledge assistant.
 
@@ -300,22 +305,22 @@ For every statement, include citation in this format:
 - [Docs: Submit Transactions]
 - [GitHub: identity.rs lines 210–278]
 ```
+
 #### Domain-Aware Tone Control
 
 Use classification result to adjust tone.
 
-
-| Domain | Tone |  |
-|---|---|---|
-| Science / Technical (deep, precise) | - use formal language - include mechanisms - avoid simplification |  |
-| Developer (actionable) | - step-by-step - include commands - explain flags |  |
-| Code (engineering tone) | - reference functions/modules - explain logic - include file + line references |  |
-| Product / Marketing (high-level) | - simple explanation - focus on benefits - avoid deep protocol detail |  |
-
+| Domain                              | Tone                                                                           |     |
+| ----------------------------------- | ------------------------------------------------------------------------------ | --- |
+| Science / Technical (deep, precise) | - use formal language - include mechanisms - avoid simplification              |     |
+| Developer (actionable)              | - step-by-step - include commands - explain flags                              |     |
+| Code (engineering tone)             | - reference functions/modules - explain logic - include file + line references |     |
+| Product / Marketing (high-level)    | - simple explanation - focus on benefits - avoid deep protocol detail          |     |
 
 Implementation
 
 Inject tone instruction dynamically:
+
 ```
 const toneInstruction = {
   science: "Provide a technical explanation with precise terminology.",
@@ -330,6 +335,7 @@ const toneInstruction = {
 Force a consistent structure.
 
 Template
+
 ```
 Answer:
 <direct answer>
@@ -350,11 +356,11 @@ Sources:
 Do NOT trust raw LLM output blindly.
 
 Validate:
+
 - every claim has citation
 - citations exist in retrieved metadata
 - no hallucinated sources
 - no empty sections
-
 
 # Future Vision / Roadmap
 
@@ -365,21 +371,26 @@ Validate:
 Implement a real-time knowledge synchronization pipeline to keep the system up-to-date:
 
 Docs & Website:
+
 - checksum-based change detection
 - partial re-indexing of updated pages
 
 GitHub Repositories:
+
 - webhook-triggered ingestion on commits/merges
 - file-level updates instead of full reindex
 
 Confluence:
+
 - timestamp-based sync for modified pages
 
 Versioning Layer:
+
 - maintain active vs deprecated content
 - ensure retrieval always uses latest authoritative data
 
-Stratgey: 
+Stratgey:
+
 ```
 Source
    ↓
@@ -395,13 +406,12 @@ Old Data Handling (versioning / invalidation)
 
 ```
 
-| Source     | Strategy            |
-| ---------- | ------------------- |
-| Whitepaper | manual trigger (based on version)     |
-| Docs       | every 6–12 hours (crawl)   |
-| Website    | daily               |
-| GitHub     | real-time (webhook - PR event) |
-
+| Source     | Strategy                          |
+| ---------- | --------------------------------- |
+| Whitepaper | manual trigger (based on version) |
+| Docs       | every 6–12 hours (crawl)          |
+| Website    | daily                             |
+| GitHub     | real-time (webhook - PR event)    |
 
 ## Expanded Source Coverage (Code Intelligence Layer)
 
@@ -410,11 +420,11 @@ Extend the system to deeply integrate Concordium’s codebases (e.g., concordium
 - Parse repositories at the symbol level (functions, modules, types)
 - Generate semantic summaries of code for retrieval
 - Enable mapping from:
-    - concept → implementation
-    - documentation → code
+  - concept → implementation
+  - documentation → code
 - Support queries such as:
-    - “Where is credential verification implemented?”
--    “How does this module work internally?”
+  - “Where is credential verification implemented?”
+- “How does this module work internally?”
 
 Impact:
 
@@ -459,4 +469,3 @@ Impact:
 
 - Slack for internal teams
 - Discord for external teams
-

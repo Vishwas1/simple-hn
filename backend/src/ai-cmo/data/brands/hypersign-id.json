@@ -1,0 +1,51 @@
+{
+  "brandId": "hypersign-id-001",
+  "name": "Hypersign",
+  "companyName": "Hypermine Labs",
+  "industry": "Web3 / Blockchain Compliance & Identity",
+  "website": "https://www.hypersign.id/",
+  "tagline": "Streamlining Web3 Compliance Through Crypto KYC",
+  "profile": {
+    "vision": "To provide privacy-first, decentralized, and reusable on-chain identity solutions that move the digital trust model from vulnerable data storage to secure proofs.",
+    "mission": "To empower Web3 projects, RWA protocols, and DeFi platforms with zero-knowledge based compliance tools that protect user privacy while meeting global regulatory standards.",
+    "tone": "Professional, technical, security-focused, and authoritative. The brand voice should sound like a trusted infrastructure partner that understands both deep cryptography and global compliance laws.",
+    "targetAudience": [
+      "Layer 1 & Layer 2 Blockchains",
+      "DeFi (Decentralized Finance) Protocols",
+      "RWA (Real World Asset) Tokenization Projects",
+      "Crypto Launchpads and ICO/IDO platforms",
+      "DApp Developers and Web3 Startups"
+    ],
+    "valuePropositions": [
+      "Privacy-Centric: Powered by Zero-Knowledge Proofs (ZKP) to verify users without exposing personal data.",
+      "Reusable KYC: Users verify once and reuse credentials across multiple platforms, reducing friction and cost.",
+      "Cross-Chain Compatibility: Onboard users on any protocol with modular SSI infrastructure.",
+      "Regulation Ready: Fully compliant with MiCA, AMLD7, and FATF requirements for VASPs.",
+      "Low Code Integration: Simple widget and SDK-based deployment for fast go-to-market."
+    ],
+    "coreOfferings": [
+      "Know Your Customer (KYC) with Liveliness Check and Face Matching",
+      "Proof-of-Personhood (PoP) to prevent Sybil attacks and bots",
+      "Know Your Business (KYB) for institutional onboarding",
+      "Know Your Transaction (KYT) for wallet due diligence and AML monitoring",
+      "Verifiable Credentials & Decentralized Identifiers (DID)"
+    ],
+    "strategicPartnerships": ["Chainlink (Cross-Chain KYC)", "Concordium", "Afthonia"],
+    "brandGuidelines": {
+      "keywords": [
+        "Zero-Knowledge Proofs",
+        "Self-Sovereign Identity",
+        "SBT",
+        "On-chain Attestation",
+        "Privacy-first Compliance"
+      ],
+      "avoid": [
+        "Centralized data storage",
+        "Repetitive KYC",
+        "Manual verification",
+        "Privacy-invasive tracking"
+      ],
+      "keyMessage": "Identity is a proof, not a record. Move from storing PII to verifying credentials on-chain."
+    }
+  }
+}

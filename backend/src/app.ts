@@ -4,6 +4,7 @@ import { healthRouter } from './routes/health';
 import { weatherAgentRouter } from './weather/routes/agent';
 import { ccdKBAgentRouter } from './ccd-kb/routes';
 import { jokeAgentRouter } from './joker/jokeRouter';
+import { aiCMORouter } from './ai-cmo/routes';
 
 export function createApp() {
   const app = express();
@@ -19,6 +20,7 @@ export function createApp() {
   app.use('/api/v1/weather', weatherAgentRouter);
   app.use('/api/v1/ccd-kb', ccdKBAgentRouter);
   app.use('/api/v1/joker', jokeAgentRouter);
+  app.use('/api/v1/cmo', aiCMORouter);
 
   // Basic 404 handler.
   app.use((_req, res) => {

@@ -5,7 +5,7 @@ import { cmoGraph } from '../graph';
 import { Command } from '@langchain/langgraph';
 import {
   CampaignRecord,
-  CampaignPost,
+  // CampaignPost,
   CreateCampaignResponse,
   GetCampaignResponse,
   GetCampaignPostsResponse,
@@ -38,7 +38,7 @@ type ListCampaignsQuery = {
 };
 
 function buildPostsResponseFromState(campaignId: string, posts: Array<Record<string, unknown>>) {
-  const normalizedPosts: CampaignPost[] = posts.map((post, index) => ({
+  const normalizedPosts: any[] = posts.map((post) => ({
     id: typeof post.id === 'string' ? post.id : null,
     campaign_id: campaignId,
     content_asset_id:

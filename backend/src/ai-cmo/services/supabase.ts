@@ -103,7 +103,7 @@ export type CampaignPost = {
   post_date: string;
   scheduled_day: number;
   status: string;
-  [key: string]: unknown;
+  // [key: string]: unknown;
 };
 
 export type GetCampaignPostsRequest = {

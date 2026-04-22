@@ -2,55 +2,132 @@
 
 import { llm } from '../llm';
 import { CMOState } from '../state';
-
 export const strategistNode = async (state: typeof CMOState.State) => {
-  console.log('--- Agent: Strategist is Media Planning & Task Generation ---');
+  console.log('--- Agent: Strategist is generating Campaign Posts ---');
 
   const instruction = state.feedback
     ? `The user rejected the previous plan. Feedback: "${state.feedback}". Original: "${state.plan}"`
-    : `Create a strategy for: "${state.objective}"`;
+    : `Create a multi-phase strategy for: "${state.objective}"`;
 
   const response = await llm.invoke(`
-    You are the Lead Marketing Strategist for ${state.brandProfile.name}.
-    Vision: ${state.brandProfile.profile.vision}
-    Tone: ${state.brandProfile.profile.tone}
+    You are a Brand Strategist with 10+ years of B2B marketing leadership for ${state.brand_name}.
+    Vision: ${state.brandProfile.vision}
+    Tone: ${state.brandProfile.tone}
     
     ${instruction}
 
     TASK:
-    1. Define a multi-channel strategy (Channels, Audience, Goals).
-    2. Break this strategy down into a JSON list of specific content tasks.
+    1. Define a high-level strategic plan.
+    2. Breakdown the plan into a sequence of "Posts". 
 
-    JSON FORMAT FOR TASKS (at the end of your response):
+    JSON STRUCTURE FOR POSTS:
+    {
+      "phase": "Awareness | Consideration | Conversion",
+      "platform": "LinkedIn | X | Blog",
+      "angle": "The hook or perspective of the post",
+      "direction": "Detailed instructions for the writer on what to cover",
+      "post_date": "YYYY-MM-DD",
+      "scheduled_day": 1
+    }
+
+    Return a human-readable summary followed by the JSON array of posts. 
+    Ensure the JSON matches this key format:
     [
-      {"id": "1", "channel": "LinkedIn", "instructions": "Write a post about...", "audience": "CTOs"},
-      {"id": "2", "channel": "X", "instructions": "Write a punchy tweet about...", "audience": "Devs"}
+      {
+        "phase": "...",
+        "platform": "...",
+        "angle": "...",
+        "direction": "...",
+        "post_date": "...",
+        "scheduled_day": 1,
+      }
     ]
+      
+    
+    ## CAMPAIGN STRUCTURES
 
-    Return a human-readable summary followed by the JSON array.`);
+    ### PRODUCT LAUNCH
+    | Phase | Scheduled Day | Platform | Angle |
+    |-------|--------------|----------|-------|
+    | warm | -7 | linkedin | problem |
+    | warm | -3 | twitter | contrarian |
+    | launch | 0 | linkedin | announcement |
+    | amplify | +3 | twitter | proof |
 
-  // --- Helper to separate text from JSON ---
+    ### FEATURE RELEASE
+    | Phase | Scheduled Day | Platform | Angle |
+    |-------|--------------|----------|-------|
+    | announce | 0 | linkedin | feature |
+    | explain | +2 | twitter | use_case |
+
+    ### DEMAND GEN
+    | Phase | Scheduled Day | Platform | Angle |
+    |-------|--------------|----------|-------|
+    | awareness | -14 | linkedin | problem |
+    | consideration | -7 | twitter | solution |
+    | conversion | 0 | linkedin | cta |
+
+    ### THOUGHT LEADERSHIP
+    | Phase | Scheduled Day | Platform | Angle |
+    |-------|--------------|----------|-------|
+    | insight | 0 | linkedin | insight |
+    | expand | +3 | twitter | contrarian |
+    | depth | +7 | linkedin | breakdown |
+
+    ### BRAND BUILDING
+    | Phase | Scheduled Day | Platform | Angle |
+    |-------|--------------|----------|-------|
+    | story | 0 | linkedin | story |
+    | belief | +5 | linkedin | belief |
+
+    ### WEBSITE TRAFFIC
+    | Phase | Scheduled Day | Platform | Angle |
+    |-------|--------------|----------|-------|
+    | awareness | -7 | linkedin | problem |
+    | traffic | 0 | linkedin | cta |
+    | amplify | +3 | twitter | proof |
+    | seo | +3 | landing page | belief |
+
+    ## DIRECTION QUALITY RULES
+
+    Audience:
+    - Must include role + company type + industry
+
+    Pain:
+    - Must be operational and measurable
+
+    Why:
+    - Must explain systemic cause
+
+    Impact:
+    - Must show business consequence
+
+    Shift:
+    - Must introduce new thinking
+
+    Product context:
+    - Must tie directly to solution
+    `);
+
   const content = response.content as string;
-  const jsonMatch = content.match(/\[\s*{[\s\S]*}\s*\]/); // Find the JSON array
+  const jsonMatch = content.match(/\[\s*{[\s\S]*}\s*\]/);
   const planText = jsonMatch ? content.split(jsonMatch[0])[0].trim() : content;
 
-  let taskList = [];
+  let postsList = [];
   if (jsonMatch) {
     try {
-      taskList = JSON.parse(jsonMatch[0]).map((task: any) => ({
-        ...task,
-        status: 'pending', // Initialize all tasks as pending
-        result: null,
-        createdAt: new Date().toISOString(),
+      // Parse and ensure 'contents' is initialized as an empty array
+      postsList = JSON.parse(jsonMatch[0]).map((post: any) => ({
+        ...post,
       }));
     } catch (e) {
-      console.error('Failed to parse tasks JSON', e);
+      console.error('Failed to parse posts JSON', e);
     }
   }
 
   return {
-    plan: planText, // This goes to the human for approval
-    tasks: taskList, // This is the queue for the Writer agent
+    plan: planText,
+    posts: postsList,
     isApproved: false,
     feedback: '',
   };

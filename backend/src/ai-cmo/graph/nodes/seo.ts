@@ -1,52 +1,79 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
-
-import { RunnableConfig } from '@langchain/core/runnables';
+// import { RunnableConfig } from '@langchain/core/runnables';
 import { llm } from '../llm';
 import { CMOState } from '../state';
-import { db } from '../../services/db';
+// import { supabaseService } from '../../services/supabase';
 
-export const seoNode = async (state: typeof CMOState.State, config: RunnableConfig) => {
-  console.log('--- Agent: SEO Specialist is optimizing tasks ---');
+export const seoNode = async (state: typeof CMOState.State) => {
+  console.log('--- Agent: SEO Specialist generating metadata ---');
+  // const campaignId = config.configurable?.thread_id;
 
-  // 1. Extract campaignId for DB updates
-  const campaignId = config.configurable?.thread_id;
+  // 2. SYNC POSTS WITH SUPABASE
+  // let postsWithIds: any[] = [];
 
-  // We send the tasks to the LLM to suggest keywords/tags for each
+  // if (campaignId) {
+  //   console.log(`--- System: Saving Posts for Campaign ${campaignId} ---`);
+
+  //   // Call the service with the strictly defined Request type
+  //   const result = await supabaseService.saveCampaignPosts({
+  //     campaign_id: campaignId,
+  //     posts: state.posts.map((post) => ({
+  //       phase: post.phase,
+  //       platform: post.platform,
+  //       angle: post.angle,
+  //       direction: post.direction,
+  //       post_date: post.post_date,
+  //       scheduled_day: post.scheduled_day,
+  //     })),
+  //   });
+
+  //   // Handle the specific SaveCampaignPostsResponse structure
+  //   if (result.success) {
+  //     postsWithIds = result.posts;
+  //     console.log(`--- System: Successfully synced ${result.count} posts ---`);
+  //   } else {
+  //     console.error('--- Error: Failed to save posts to Supabase ---');
+  //     // Fallback to existing state if DB sync fails (to keep graph moving)
+  //     postsWithIds = state.posts;
+  //   }
+  // }
+
+  // 1. LLM generates SEO metadata
   const response = await llm.invoke(`
-    You are an SEO & Social Media Specialist for ${state.brandProfile.name}.
+    You are an SEO Analyst for ${state.brand_name}.
     Objective: ${state.objective}
-    Tasks: ${JSON.stringify(state.tasks)}
+    Post Ideas: ${JSON.stringify(state.posts)}
 
-    For each task in the list, suggest 3-5 relevant SEO keywords and 2-3 trending hashtags.
-    Return the result ONLY as a JSON array of objects:
-    [{"id": "task_id", "keywords": ["..."], "hashtags": ["..."]}]
+    TASK: Suggest keywords, hashtags, and a specific content_type for each post.
+    Return ONLY a JSON array:
+    [{"content_type": "...", "keywords": ["..."], "hashtags": ["..."]}]
   `);
 
-  // Clean the response (strip markdown if the LLM adds it)
   const cleanJson = (response.content as string).replace(/```json|```/g, '').trim();
   const seoData = JSON.parse(cleanJson);
 
-  // 3. Map the SEO data back into our tasks
-  const enrichedTasks = state.tasks.map((task) => {
-    const optimization = seoData.find((o: any) => o.id === task.id);
+  // 3. GENERATE CONTENTS ARRAY (State Only)
+  // Map keywords to the 'id' field returned in the Response
+  const generatedContents = state.posts.map((post: any, index: number) => {
+    const seo = seoData[index] || {};
+
     return {
-      ...task,
-      keywords: optimization?.keywords || [],
-      hashtags: optimization?.hashtags || [],
+      campaign_post_id: post.id, // Using 'id' from SaveCampaignPostsResponse.posts
+      workspace_id: state.workspace_id,
+      brand_name: state.brand_name,
+      content_type: seo.content_type || post.platform,
+      content_body: '',
+      objective: state.objective,
+      tone: state.brandProfile?.profile?.tone || 'Professional',
+      status: 'pending' as const,
+      keywords: seo.keywords || [],
+      hashtags: seo.hashtags || [],
     };
   });
 
-  // 4. UPDATE DB: Save the enriched tasks to the JSON file
-  if (campaignId) {
-    console.log(`--- System: Saving SEO optimization to Campaign ${campaignId} ---`);
-    await db.save('campaigns', campaignId, {
-      id: campaignId,
-      brandId: state.brandId,
-      objective: state.objective,
-      plan: state.plan,
-      tasks: enrichedTasks,
-    });
-  }
-
-  return { tasks: enrichedTasks };
+  // 4. Return updated state to the Graph
+  return {
+    // posts: postsWithIds,
+    contents: generatedContents,
+  };
 };

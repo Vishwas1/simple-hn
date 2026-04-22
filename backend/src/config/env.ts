@@ -27,11 +27,13 @@ const EnvSchema = z.object({
   HUGGINGFACE_MODEL: z.string().default('meta-llama/Llama-3.2-3B-Instruct'),
 
   // Supabase
+  SUPABASE_AI_CMO_URL: z.string().optional(),
   SUPABASE_QUERYBRAIN_URL: z.string().optional(),
   SUPABASE_INGEST_URL: z.string().optional(),
   SUPABASE_INSERT_DOCUMENT_URL: z.string().optional(),
   SUPABASE_API_KEY: z.string().optional(),
   SUPABASE_ACCESS_TOKEN: z.string().optional(),
+  CORS_ALLOWED_ORIGINS: z.string().default('http://localhost:5174,http://127.0.0.1:5174'),
 });
 
 export type Env = z.infer<typeof EnvSchema>;

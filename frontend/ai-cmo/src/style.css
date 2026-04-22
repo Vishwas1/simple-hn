@@ -1,0 +1,197 @@
+@import url('https://fonts.googleapis.com/css2?family=Instrument+Sans:wght@400;500;600;700&display=swap');
+
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+:root {
+  color: #17201a;
+  background: #f4f6f2;
+  font-family:
+    'Instrument Sans',
+    ui-sans-serif,
+    system-ui,
+    -apple-system,
+    BlinkMacSystemFont,
+    'Segoe UI',
+    sans-serif;
+  text-rendering: optimizeLegibility;
+  font-synthesis: none;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+* {
+  box-sizing: border-box;
+}
+
+html {
+  scroll-behavior: smooth;
+}
+
+body {
+  margin: 0;
+  min-width: 320px;
+  min-height: 100vh;
+  background:
+    radial-gradient(circle at top left, rgba(223, 238, 223, 0.9), transparent 28%),
+    linear-gradient(180deg, #f8faf5 0%, #f4f6f2 100%);
+}
+
+button,
+input,
+select,
+textarea {
+  font: inherit;
+}
+
+#app {
+  min-height: 100vh;
+}
+
+.strategist-orbit {
+  position: relative;
+  display: grid;
+  height: 8.5rem;
+  width: 8.5rem;
+  place-items: center;
+}
+
+.strategist-orbit--compact {
+  height: 3.75rem;
+  width: 3.75rem;
+  flex: none;
+}
+
+.strategist-orbit__ring {
+  position: absolute;
+  inset: 0;
+  border: 1px solid rgba(38, 79, 61, 0.16);
+  border-radius: 9999px;
+  animation: strategist-pulse 2.8s ease-out infinite;
+}
+
+.strategist-orbit__ring--delayed {
+  animation-delay: 1.4s;
+}
+
+.strategist-orbit__core {
+  display: grid;
+  height: 4rem;
+  width: 4rem;
+  place-items: center;
+  border-radius: 9999px;
+  background: #264f3d;
+  color: white;
+  box-shadow: 0 14px 30px -18px rgba(38, 79, 61, 0.65);
+  animation: strategist-float 2.6s ease-in-out infinite;
+}
+
+.strategist-orbit__core--compact {
+  height: 2.35rem;
+  width: 2.35rem;
+  box-shadow: 0 10px 22px -16px rgba(38, 79, 61, 0.65);
+}
+
+.strategist-orbit__core--done {
+  animation: none;
+}
+
+.strategist-bar {
+  height: 0.4rem;
+  width: 100%;
+  overflow: hidden;
+  border-radius: 9999px;
+  background: rgba(38, 79, 61, 0.09);
+  position: relative;
+}
+
+.strategist-bar::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  width: 42%;
+  border-radius: inherit;
+  background: linear-gradient(90deg, rgba(38, 79, 61, 0.18), rgba(38, 79, 61, 0.72));
+  animation: strategist-scan 1.8s ease-in-out infinite;
+}
+
+.strategist-bar--delayed::after {
+  animation-delay: 0.35s;
+}
+
+.strategist-bar--late::after {
+  animation-delay: 0.7s;
+}
+
+@keyframes strategist-pulse {
+  0% {
+    transform: scale(0.72);
+    opacity: 0.8;
+  }
+
+  70% {
+    transform: scale(1);
+    opacity: 0;
+  }
+
+  100% {
+    transform: scale(1);
+    opacity: 0;
+  }
+}
+
+@keyframes strategist-float {
+  0%,
+  100% {
+    transform: translateY(0);
+  }
+
+  50% {
+    transform: translateY(-5px);
+  }
+}
+
+@keyframes strategist-scan {
+  0% {
+    transform: translateX(-120%);
+  }
+
+  100% {
+    transform: translateX(260%);
+  }
+}
+
+.seo-loader,
+.writer-loader {
+  position: relative;
+  overflow: hidden;
+}
+
+.seo-loader::before,
+.writer-loader::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(90deg, transparent 0%, rgba(255, 255, 255, 0.35) 50%, transparent 100%);
+  animation: status-shimmer 1.25s ease-in-out infinite;
+}
+
+.seo-loader::after,
+.writer-loader::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  border-radius: inherit;
+  box-shadow: inset 0 0 0 1px rgba(38, 79, 61, 0.08);
+}
+
+@keyframes status-shimmer {
+  0% {
+    transform: translateX(-120%);
+  }
+
+  100% {
+    transform: translateX(220%);
+  }
+}

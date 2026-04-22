@@ -2,27 +2,40 @@
 import { Annotation } from '@langchain/langgraph';
 
 export const CMOState = Annotation.Root({
-  brandId: Annotation<string>(),
+  workspace_id: Annotation<string>(),
+  brand_name: Annotation<string>(),
   brandProfile: Annotation<any>(),
-  objective: Annotation<string>(),
-  // We keep 'plan' ONLY as the high-level summary for the Human to approve
+  objective: Annotation<string>(), // lets have dinner tonight!
   plan: Annotation<string>(),
-  // 'tasks' is the actual "Job Queue"
-  tasks: Annotation<
+
+  // The Post "Idea" or "Task"
+  posts: Annotation<
     {
-      id: string;
-      channel: string;
-      instructions: string;
-      audience: string;
-      campaignId: string;
-      status: 'pending' | 'processing' | 'completed';
-      result?: string;
-      createdAt: string;
-      finishedAt: string;
-      keywords?: string[]; // New Field
-      hashtags?: string[]; // New Field
+      id?: string; // campaign_post_id
+      phase: string;
+      platform: string;
+      angle: string;
+      direction: string;
+      post_date: string;
+      scheduled_day: number;
     }[]
-  >(),
+  >({
+    reducer: (oldValue, newValue) => newValue, // Overwrite state with latest updates
+  }),
+  contents: Annotation<
+    {
+      content_type: string;
+      content_body: string; // The Writer fills this
+      status: 'pending' | 'processing' | 'completed'; // Track each piece
+      keywords?: string[];
+      hashtags?: string[];
+      tone: string;
+      objective: string;
+      campaign_post_id: string;
+    }[]
+  >({
+    reducer: (oldValue, newValue) => newValue, // Overwrite state with latest updates
+  }),
   feedback: Annotation<string>(),
   isApproved: Annotation<boolean>(),
 });

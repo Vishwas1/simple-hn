@@ -25,7 +25,7 @@ const workflow = new StateGraph(CMOState)
   .addEdge('seo_agent', 'writer')
 
   .addConditionalEdges('writer', (state) => {
-    const nextTask = state.tasks.find((t) => t.status === 'pending');
+    const nextTask = state.contents.find((c) => c.status === 'pending');
     if (nextTask) {
       return 'writer'; // Loop back to the same node for the next task
     }

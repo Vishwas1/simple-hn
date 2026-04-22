@@ -1,4 +1,6 @@
 import express from 'express';
+import type { Request, Response, NextFunction } from 'express';
+import { env } from './config/env';
 import { httpLogger } from './logger';
 import { healthRouter } from './routes/health';
 import { weatherAgentRouter } from './weather/routes/agent';
@@ -6,9 +8,32 @@ import { ccdKBAgentRouter } from './ccd-kb/routes';
 import { jokeAgentRouter } from './joker/jokeRouter';
 import { aiCMORouter } from './ai-cmo/routes';
 
+const allowedOrigins = env.CORS_ALLOWED_ORIGINS.split(',')
+  .map((origin) => origin.trim())
+  .filter(Boolean);
+
+function corsMiddleware(req: Request, res: Response, next: NextFunction) {
+  const requestOrigin = req.headers.origin;
+
+  if (requestOrigin && allowedOrigins.includes(requestOrigin)) {
+    res.header('Access-Control-Allow-Origin', requestOrigin);
+    res.header('Vary', 'Origin');
+  }
+
+  res.header('Access-Control-Allow-Methods', 'GET,POST,PUT,PATCH,DELETE,OPTIONS');
+  res.header('Access-Control-Allow-Headers', 'Content-Type, Authorization');
+
+  if (req.method === 'OPTIONS') {
+    return res.sendStatus(204);
+  }
+
+  next();
+}
+
 export function createApp() {
   const app = express();
 
+  app.use(corsMiddleware);
   app.use(httpLogger);
   app.use(express.json());
 

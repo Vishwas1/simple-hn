@@ -1,5 +1,6 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
 // import { RunnableConfig } from '@langchain/core/runnables';
+import { supabaseService } from '../../services/supabase';
 import { llm } from '../llm';
 import { CMOState } from '../state';
 // import { supabaseService } from '../../services/supabase';
@@ -38,6 +39,11 @@ export const seoNode = async (state: typeof CMOState.State) => {
   //   }
   // }
 
+  const brand = await supabaseService.getBrandProfile({
+    workspace_id: state.workspace_id,
+    brand_name: state.brand_name,
+  });
+
   // 1. LLM generates SEO metadata
   const response = await llm.invoke(`
     You are an SEO Analyst for ${state.brand_name}.
@@ -64,7 +70,7 @@ export const seoNode = async (state: typeof CMOState.State) => {
       content_type: seo.content_type || post.platform,
       content_body: '',
       objective: state.objective,
-      tone: state.brandProfile?.profile?.tone || 'Professional',
+      tone: brand.data.tone_voice || 'Professional',
       status: 'pending' as const,
       keywords: seo.keywords || [],
       hashtags: seo.hashtags || [],

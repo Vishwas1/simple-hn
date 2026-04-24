@@ -66,6 +66,7 @@ export const writerNode = async (state: typeof CMOState.State) => {
     ...currentContent,
     status: 'completed',
     content_body: generatedBody,
+    generated_at: new Date().toISOString(),
   };
 
   return { contents: updatedContents };

@@ -27,7 +27,15 @@ type GenerationPreview = {
 };
 
 type PostContentStatus = {
+  success?: boolean;
+  campaign_id?: string;
+  campaign_post_id?: string;
+  source?: 'database' | 'state';
+  content_status?: string;
+  content_asset_id?: string | null;
+  content_type?: string;
   content_body?: string | null;
+  generated_at?: string | null;
   keywords?: string[] | null;
   hashtags?: string[] | null;
   [key: string]: unknown;
@@ -83,6 +91,7 @@ export function useCmoDashboard() {
   const selectedCampaignId = ref('');
   const contentCampaignFilter = ref('all');
   const postsByCampaignId = ref<Record<string, CampaignPost[]>>({});
+  const contentsByCampaignId = ref<Record<string, Record<string, PostContentStatus>>>({});
   const selectedBrand = ref<BrandSelection | null>(null);
   const activeSection = ref<DashboardSection>('home');
   const isLeftNavExpanded = ref(true);
@@ -137,17 +146,40 @@ export function useCmoDashboard() {
       contentCampaignFilter.value === 'all'
         ? Object.values(postsByCampaignId.value).flat()
         : postsByCampaignId.value[contentCampaignFilter.value] || [];
+    const sourceContents =
+      contentCampaignFilter.value === 'all'
+        ? Object.values(contentsByCampaignId.value).flatMap((campaignContents) =>
+            Object.values(campaignContents),
+          )
+        : Object.values(contentsByCampaignId.value[contentCampaignFilter.value] || {});
 
-    return sourcePosts.map((post) => ({
-      id: post.id,
-      title: post.angle,
-      description: post.direction,
-      platform: post.platform,
-      phase: post.phase,
-      status: post.status,
-      postDate: post.post_date,
-      campaignId: post.campaign_id,
-    }));
+    const contentByPostId = new Map(
+      sourceContents
+        .filter((content): content is PostContentStatus & { campaign_post_id: string } =>
+          typeof content.campaign_post_id === 'string' && content.campaign_post_id.length > 0,
+        )
+        .map((content) => [content.campaign_post_id, content] as const),
+    );
+
+    return sourcePosts.map((post) => {
+      const content = post.id ? contentByPostId.get(post.id) : undefined;
+
+      return {
+        id: post.id,
+        title: post.angle,
+        description: post.direction,
+        platform: post.platform,
+        phase: post.phase,
+        status: post.status,
+        postDate: post.post_date,
+        campaignId: post.campaign_id,
+        contentBody: content?.content_body || '',
+        generatedAt: content?.generated_at || '',
+        keywords: content?.keywords || [],
+        hashtags: content?.hashtags || [],
+        contentStatus: content?.content_status || 'pending',
+      };
+    });
   });
 
   const selectedBrandKey = computed(() =>
@@ -236,6 +268,37 @@ export function useCmoDashboard() {
     return nextPosts;
   }
 
+  async function loadPostContents(campaignId = selectedCampaignId.value) {
+    if (!campaignId) {
+      return {};
+    }
+
+    const currentPosts = postsByCampaignId.value[campaignId] || [];
+    if (currentPosts.length === 0) {
+      return {};
+    }
+
+    const entries = await Promise.all(
+      currentPosts
+        .filter((post) => post.id)
+        .map(async (post) => {
+          const content = await request<PostContentStatus>(
+            `/campaign/${campaignId}/posts/${post.id}/contents`,
+          );
+
+          return [post.id as string, content] as const;
+        }),
+    );
+
+    const nextContents = Object.fromEntries(entries);
+    contentsByCampaignId.value = {
+      ...contentsByCampaignId.value,
+      [campaignId]: nextContents,
+    };
+
+    return nextContents;
+  }
+
   function clearPostPolling(campaignId: string) {
     const timer = postPollingTimers.get(campaignId);
     if (timer) {
@@ -272,6 +335,19 @@ export function useCmoDashboard() {
     postsByCampaignId.value = Object.fromEntries(postEntries);
   }
 
+  async function hydrateCampaignContents() {
+    if (campaigns.value.length === 0) {
+      contentsByCampaignId.value = {};
+      return;
+    }
+
+    const contentEntries = await Promise.all(
+      campaigns.value.map(async (campaign) => [campaign.id, await loadPostContents(campaign.id)] as const),
+    );
+
+    contentsByCampaignId.value = Object.fromEntries(contentEntries);
+  }
+
   async function refreshDashboard() {
     if (!selectedBrand.value) {
       return;
@@ -284,6 +360,7 @@ export function useCmoDashboard() {
       await loadBrandProfile();
       await loadCampaigns();
       await hydrateCampaignPosts();
+      await hydrateCampaignContents();
       if (!selectedCampaignId.value && campaigns.value.length > 0) {
         selectedCampaignId.value = campaigns.value[0].id;
       }
@@ -343,6 +420,7 @@ export function useCmoDashboard() {
         ...postsByCampaignId.value,
         [response.campaignId]: response.posts || [],
       };
+      await loadPostContents(response.campaignId);
       contentCampaignFilter.value = response.campaignId;
     } catch (err) {
       error.value = formatError(err);
@@ -472,6 +550,7 @@ export function useCmoDashboard() {
     selectedCampaignId.value = '';
     contentCampaignFilter.value = 'all';
     postsByCampaignId.value = {};
+    contentsByCampaignId.value = {};
     campaignReview.value = null;
     approvedCampaignId.value = '';
     postPollingStates.value = {};
@@ -485,6 +564,7 @@ export function useCmoDashboard() {
     brandProfile.value = null;
     campaigns.value = [];
     postsByCampaignId.value = {};
+    contentsByCampaignId.value = {};
     selectedCampaignId.value = '';
     contentCampaignFilter.value = 'all';
     campaignReview.value = null;
@@ -508,6 +588,9 @@ export function useCmoDashboard() {
       if (!postsByCampaignId.value[campaignId]) {
         await loadPosts(campaignId);
       }
+      if (!contentsByCampaignId.value[campaignId]) {
+        await loadPostContents(campaignId);
+      }
     } catch (err) {
       error.value = formatError(err);
     }
@@ -523,6 +606,7 @@ export function useCmoDashboard() {
     campaignReview,
     campaigns,
     contentItems,
+    contentsByCampaignId,
     dashboardStats,
     error,
     generationPreview,

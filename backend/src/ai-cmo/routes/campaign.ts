@@ -28,6 +28,7 @@ type GetCampaignPostContentStatusResponse = {
   content_asset_id: string | null;
   content_type?: string;
   content_body?: string;
+  generated_at?: string;
   keywords?: string[];
   hashtags?: string[];
 };
@@ -101,6 +102,7 @@ function buildContentStatusResponseFromState(
     content_asset_id: null,
     content_type: typeof content.content_type === 'string' ? content.content_type : undefined,
     content_body: typeof content.content_body === 'string' ? content.content_body : undefined,
+    generated_at: typeof content.generated_at === 'string' ? content.generated_at : undefined,
     keywords: Array.isArray(content.keywords)
       ? content.keywords.filter((value): value is string => typeof value === 'string')
       : undefined,
@@ -199,11 +201,11 @@ campaignRouter.post('/', async (req, res) => {
   const { workspace_id, brand_name, objective } = req.body;
 
   // const brand = await db.get('brands', brandId);
-  const brand = await supabaseService.getBrandProfile({
-    workspace_id,
-    brand_name,
-  });
-  if (!brand) return res.status(404).json({ error: 'Brand not found' });
+  // const brand = await supabaseService.getBrandProfile({
+  //   workspace_id,
+  //   brand_name,
+  // });
+  // if (!brand) return res.status(404).json({ error: 'Brand not found' });
 
   // Save the initial strategy and generated task list to JSON
   const createCampaingResponse: CreateCampaignResponse = await supabaseService.createCampaign({
@@ -228,7 +230,7 @@ campaignRouter.post('/', async (req, res) => {
   const initialState = {
     workspace_id,
     brand_name,
-    brandProfile: brand,
+    // brandProfile: brand,
     objective,
     plan: '',
     posts: [],

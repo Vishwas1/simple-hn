@@ -4,7 +4,7 @@ import { Annotation } from '@langchain/langgraph';
 export const CMOState = Annotation.Root({
   workspace_id: Annotation<string>(),
   brand_name: Annotation<string>(),
-  brandProfile: Annotation<any>(),
+  // brandProfile: Annotation<any>(),
   objective: Annotation<string>(), // lets have dinner tonight!
   plan: Annotation<string>(),
 
@@ -26,6 +26,7 @@ export const CMOState = Annotation.Root({
     {
       content_type: string;
       content_body: string; // The Writer fills this
+      generated_at?: string;
       status: 'pending' | 'processing' | 'completed'; // Track each piece
       keywords?: string[];
       hashtags?: string[];

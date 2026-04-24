@@ -1,5 +1,6 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
 
+import { supabaseService } from '../../services/supabase';
 import { llm } from '../llm';
 import { CMOState } from '../state';
 export const strategistNode = async (state: typeof CMOState.State) => {
@@ -9,10 +10,15 @@ export const strategistNode = async (state: typeof CMOState.State) => {
     ? `The user rejected the previous plan. Feedback: "${state.feedback}". Original: "${state.plan}"`
     : `Create a multi-phase strategy for: "${state.objective}"`;
 
+  const brand = await supabaseService.getBrandProfile({
+    workspace_id: state.workspace_id,
+    brand_name: state.brand_name,
+  });
+
   const response = await llm.invoke(`
     You are a Brand Strategist with 10+ years of B2B marketing leadership for ${state.brand_name}.
-    Vision: ${state.brandProfile.vision}
-    Tone: ${state.brandProfile.tone}
+    Vision: ${brand.data.vision}
+    Tone: ${brand.data.tone_voice}
     
     ${instruction}
 

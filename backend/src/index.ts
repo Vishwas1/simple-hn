@@ -1,9 +1,19 @@
 import { env } from './config/env';
 import { logger } from './logger';
 import { createApp } from './app';
+import { initGraph } from './ai-cmo/graph';
 
 async function main() {
   const app = createApp();
+
+  try {
+    // Initalising graph with persistent supabase checkpointers
+    logger.info('Initalising graph with persistent supabase checkpointers');
+    await initGraph();
+  } catch (e) {
+    logger.error({ e });
+    console.error({ e });
+  }
 
   const server = app.listen(env.PORT, () => {
     logger.info({ port: env.PORT, env: env.NODE_ENV }, 'Server listening');

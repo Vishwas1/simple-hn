@@ -1,9 +1,12 @@
-import { StateGraph, START, END, MemorySaver } from '@langchain/langgraph';
+import { StateGraph, START, END } from '@langchain/langgraph';
+import { PostgresSaver } from '@langchain/langgraph-checkpoint-postgres';
 import { CMOState } from './state';
 import { strategistNode } from './nodes/strategist';
 import { humanReviewNode } from './nodes/humanReview';
 import { writerNode } from './nodes/writer';
 import { seoNode } from './nodes/seo';
+import { env } from '../../config/env';
+const checkpointer = PostgresSaver.fromConnString(env.SUPABASE_DB_CONNECTION_STRING!);
 
 const workflow = new StateGraph(CMOState)
   .addNode('strategist', strategistNode)
@@ -32,6 +35,23 @@ const workflow = new StateGraph(CMOState)
     return END; // All tasks done!
   });
 
+// export const cmoGraph = workflow.compile({
+//   checkpointer: new MemorySaver(),
+// });
+
+// export const cmoGraph = (async () => {
+//   // IMPORTANT: setup() creates the tables in Supabase automatically
+//   await checkpointer.setup();
+
+//   return workflow.compile({
+//     checkpointer: checkpointer,
+//   });
+// })();
+
 export const cmoGraph = workflow.compile({
-  checkpointer: new MemorySaver(),
+  checkpointer: checkpointer,
 });
+
+export const initGraph = async () => {
+  await checkpointer.setup();
+};

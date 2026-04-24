@@ -34,6 +34,7 @@ const EnvSchema = z.object({
   SUPABASE_API_KEY: z.string().optional(),
   SUPABASE_ACCESS_TOKEN: z.string().optional(),
   CORS_ALLOWED_ORIGINS: z.string().default('http://localhost:5174,http://127.0.0.1:5174'),
+  SUPABASE_DB_CONNECTION_STRING: z.string().optional(),
 });
 
 export type Env = z.infer<typeof EnvSchema>;

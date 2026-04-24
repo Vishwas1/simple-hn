@@ -1,4 +1,5 @@
 <script setup lang="ts">
+import { ref } from 'vue';
 import SectionCard from './components/SectionCard.vue';
 import StatCard from './components/StatCard.vue';
 import { useCmoDashboard } from './composables/useCmoDashboard';
@@ -45,6 +46,8 @@ const {
   isWriterComplete
 } = useCmoDashboard();
 
+const expandedContentIds = ref<string[]>([]);
+
 function formatDate(value?: string) {
   if (!value) {
     return 'Not scheduled';
@@ -75,6 +78,23 @@ function summarizeList(values?: string[] | null, fallback = 'Pending') {
 
 function isWorking(status?: { content_body?: string | null; keywords?: string[] | null; hashtags?: string[] | null }) {
   return !status || (!status.keywords?.length && !status.hashtags?.length && !status.content_body?.trim());
+}
+
+function isContentExpanded(id?: string) {
+  return Boolean(id && expandedContentIds.value.includes(id));
+}
+
+function toggleContentExpanded(id?: string) {
+  if (!id) {
+    return;
+  }
+
+  if (expandedContentIds.value.includes(id)) {
+    expandedContentIds.value = expandedContentIds.value.filter((currentId) => currentId !== id);
+    return;
+  }
+
+  expandedContentIds.value = [...expandedContentIds.value, id];
 }
 
 const navItems = [
@@ -870,21 +890,63 @@ const navItems = [
                 :key="item.id"
                 class="rounded-3xl border border-line bg-white p-5"
               >
-                <div class="flex flex-col gap-3 md:flex-row md:items-start md:justify-between">
-                  <div>
-                    <p class="text-xs uppercase tracking-[0.2em] text-mute">
-                      {{ item.platform }} • {{ item.phase }}
-                    </p>
+                <button
+                  class="flex w-full flex-col gap-3 text-left md:flex-row md:items-start md:justify-between"
+                  @click="toggleContentExpanded(item.id)"
+                >
+                  <div class="min-w-0">
+                    <div class="flex items-center gap-3">
+                      <p class="text-xs uppercase tracking-[0.2em] text-mute">
+                        {{ item.platform }} • {{ item.phase }}
+                      </p>
+                      <svg
+                        viewBox="0 0 24 24"
+                        fill="none"
+                        stroke="currentColor"
+                        stroke-width="1.8"
+                        class="h-4 w-4 shrink-0 text-mute transition-transform"
+                        :class="isContentExpanded(item.id) ? 'rotate-180' : ''"
+                      >
+                        <path d="M6 9l6 6 6-6" />
+                      </svg>
+                    </div>
                     <h3 class="mt-2 text-lg font-semibold text-ink">{{ item.title }}</h3>
                     <p class="mt-3 text-sm leading-6 text-mute">{{ item.description }}</p>
                   </div>
                   <div class="flex flex-col gap-2">
                     <span class="rounded-full bg-accent-soft px-3 py-1 text-xs font-medium text-accent">
-                      {{ item.status }}
+                      {{ item.contentStatus }}
                     </span>
                     <span class="rounded-full bg-[#f3f5ef] px-3 py-1 text-xs text-mute">
-                      {{ formatDate(item.postDate) }}
+                      Post {{ formatDate(item.postDate) }}
                     </span>
+                    <span class="rounded-full bg-[#f3f5ef] px-3 py-1 text-xs text-mute">
+                      Generated pending
+                    </span>
+                  </div>
+                </button>
+
+                <div v-if="isContentExpanded(item.id)" class="mt-4 space-y-4">
+                  <div class="grid gap-3 sm:grid-cols-2">
+                    <div class="rounded-2xl bg-[#f9fbf8] p-4">
+                      <p class="text-[10px] uppercase tracking-[0.16em] text-mute">Keywords</p>
+                      <p class="mt-2 text-sm leading-6 text-ink">
+                        {{ summarizeList(item.keywords, 'No keywords yet.') }}
+                      </p>
+                    </div>
+                    <div class="rounded-2xl bg-[#f9fbf8] p-4">
+                      <p class="text-[10px] uppercase tracking-[0.16em] text-mute">Hashtags</p>
+                      <p class="mt-2 text-sm leading-6 text-ink">
+                        {{ summarizeList(item.hashtags, 'No hashtags yet.') }}
+                      </p>
+                    </div>
+                  </div>
+
+                  <div class="rounded-2xl border border-line bg-[#fcfcfa] p-4">
+                    <p class="text-[10px] uppercase tracking-[0.16em] text-mute">Generated content</p>
+                    <p class="mt-2 whitespace-pre-line text-sm leading-6 text-ink">
+                      {{ trimCopy(item.contentBody, 'No generated content body available yet.') }}
+                    </p>
                   </div>
                 </div>
               </div>

@@ -134,6 +134,8 @@ export const strategistNode = async (state: typeof CMOState.State) => {
   return {
     plan: planText,
     posts: postsList,
+    objective: state.objective, // Keep it in the state!
+    brand_name: state.brand_name, // Keep it in the state!
     isApproved: false,
     feedback: '',
   };

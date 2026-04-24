@@ -10,6 +10,7 @@ import {
   GetCampaignResponse,
   GetCampaignPostsResponse,
   GetCampaignsResponse,
+  LangraphStateRecord,
   supabaseService,
 } from '../services/supabase';
 
@@ -37,6 +38,29 @@ type ListCampaignsQuery = {
   workspace_id?: string;
   brand_name?: string;
 };
+
+function pickLangraphState(
+  states: LangraphStateRecord[] | undefined,
+  campaignId: string,
+): {
+  campaign_id: string;
+  pulse: string;
+  objective: string;
+  brandName: string;
+} | null {
+  const first = states?.find((state) => state.id === campaignId) || states?.[0];
+
+  if (first) {
+    return {
+      campaign_id: first.id,
+      pulse: first.pulse,
+      objective: first.objective,
+      brandName: first.brandName,
+    };
+  }
+
+  return null;
+}
 
 function buildPostsResponseFromState(campaignId: string, posts: Array<Record<string, unknown>>) {
   const normalizedPosts: any[] = posts.map((post) => ({
@@ -173,6 +197,25 @@ campaignRouter.get(
         return res.json(campaignResponse);
       }
 
+      const stateRecords = await supabaseService.getLangraphState();
+      const matchedState = pickLangraphState(stateRecords, campaignId);
+
+      if (matchedState) {
+        return res.json({
+          success: true,
+          campaign: {
+            id: campaignId,
+            workspace_id: '',
+            brand_name: matchedState.brandName,
+            goal: matchedState.objective,
+            campaign_type: 'product_launch',
+            launch_date: '',
+            status: matchedState.pulse,
+            created_at: '',
+          },
+        });
+      }
+
       const graphState = await cmoGraph.getState({
         configurable: { thread_id: campaignId },
       });
@@ -200,13 +243,6 @@ campaignRouter.get(
 campaignRouter.post('/', async (req, res) => {
   const { workspace_id, brand_name, objective } = req.body;
 
-  // const brand = await db.get('brands', brandId);
-  // const brand = await supabaseService.getBrandProfile({
-  //   workspace_id,
-  //   brand_name,
-  // });
-  // if (!brand) return res.status(404).json({ error: 'Brand not found' });
-
   // Save the initial strategy and generated task list to JSON
   const createCampaingResponse: CreateCampaignResponse = await supabaseService.createCampaign({
     workspace_id,
@@ -230,7 +266,6 @@ campaignRouter.post('/', async (req, res) => {
   const initialState = {
     workspace_id,
     brand_name,
-    // brandProfile: brand,
     objective,
     plan: '',
     posts: [],
@@ -239,22 +274,13 @@ campaignRouter.post('/', async (req, res) => {
 
   const finalState = await cmoGraph.invoke(initialState, {
     configurable: { thread_id: campaignId },
+    metadata: {
+      objective: objective,
+      brand_name: brand_name,
+      campaign_name: `${brand_name} - ${objective.substring(0, 20)}...`, // For the Card Title
+      start_date: new Date().toISOString(),
+    },
   });
-
-  ///// we will store it when human approves it.
-  // await supabaseService.saveCampaignPosts({
-  //   campaign_id: campaignId,
-  //   posts: finalState.posts,
-  // });
-
-  // await db.save('campaigns', campaignId, {
-  //   id: campaignId,
-  //   brandId,
-  //   objective,
-  //   plan: finalState.plan,
-  //   tasks: finalState.tasks,
-  //   status: 'PENDING_APPROVAL',
-  // });
 
   res.json({ campaignId, plan: finalState.plan, posts: finalState.posts });
 });
@@ -318,23 +344,6 @@ campaignRouter.get(
       const campaignId = req.params.id;
       const postId = req.params.postId;
 
-      // const postsResponse = await supabaseService.getCampaignPosts({
-      //   campaign_id: campaignId,
-      // });
-
-      // const matchedPost = postsResponse?.posts?.find((post) => post.id === postId);
-
-      // if (matchedPost) {
-      //   return res.json({
-      //     success: true,
-      //     campaign_id: campaignId,
-      //     campaign_post_id: postId,
-      //     source: 'database',
-      //     content_status: matchedPost.status,
-      //     content_asset_id: matchedPost.content_asset_id,
-      //   });
-      // }
-
       const graphState = await cmoGraph.getState({
         configurable: { thread_id: campaignId },
       });
@@ -383,18 +392,6 @@ campaignRouter.post('/:id/approve', async (req, res) => {
   cmoGraph.invoke(new Command({ resume: { approved, feedback } }), {
     configurable: { thread_id: campaignId },
   });
-
-  // if (finalState.isApproved) {
-  // }
-  // Update our JSON file with the current progress
-  // const currentData = await db.get('campaigns', campaignId);
-
-  // await db.save('campaigns', campaignId, {
-  //   ...currentData,
-  //   plan: finalState.plan, // might have changed if feedback was given
-  //   posts: finalState.posts,
-  //   status: approved ? 'EXECUTING' : 'REVISING',
-  // });
 
   res.json({ message: 'Process resumed', status: approved ? 'EXECUTING' : 'REVISING' });
 });

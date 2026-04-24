@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { ref } from 'vue';
+import { ref, watch } from 'vue';
 import SectionCard from './components/SectionCard.vue';
 import StatCard from './components/StatCard.vue';
 import { useCmoDashboard } from './composables/useCmoDashboard';
@@ -27,10 +27,13 @@ const {
   selectedBrandKey,
   selectedCampaignId,
   selectedCampaign,
+  selectedKanbanCampaignId,
   selectedWorkspaceId,
   submitting,
   successMessage,
   approvedCampaignId,
+  contentKanbanColumns,
+  campaignKanbanColumns,
   postPollingStates,
   createCampaign,
   leaveBrandDashboard,
@@ -43,10 +46,31 @@ const {
   workspaceOptions,
   postContents,
   isSeoComplete,
-  isWriterComplete
+  isWriterComplete,
+  loadCampaignPostsForKanban,
 } = useCmoDashboard();
 
 const expandedContentIds = ref<string[]>([]);
+const kanbanModalOpen = ref(false);
+const kanbanModalCampaign = ref<null | { id: string; brand_name: string; goal: string; status: string }>(null);
+const kanbanModalPosts = ref<any[]>([]);
+const kanbanModalLoading = ref(false);
+const kanbanColumns = [
+  { key: 'backlog', label: 'Backlog', helper: 'Plan is being drafted', tone: 'bg-[#f8faf5]' },
+  { key: 'review', label: 'In Review', helper: 'Waiting for user approval', tone: 'bg-[#fbfaf7]' },
+  { key: 'optimizing', label: 'Optimizing', helper: 'Keywords and content mapping', tone: 'bg-[#f8fbfd]' },
+  { key: 'execution', label: 'Execution', helper: 'Writing individual posts', tone: 'bg-[#fffaf3]' },
+] as const;
+
+function getKanbanStats() {
+  const total = campaigns.value.length;
+  const completed = campaignKanbanColumns.value.execution.length + campaignKanbanColumns.value.done.length;
+  const inProgress = campaignKanbanColumns.value.review.length + campaignKanbanColumns.value.optimizing.length;
+  const pending = campaignKanbanColumns.value.backlog.length;
+  const progress = total === 0 ? 0 : Math.round((completed / total) * 100);
+
+  return { total, completed, inProgress, pending, progress };
+}
 
 function formatDate(value?: string) {
   if (!value) {
@@ -97,11 +121,55 @@ function toggleContentExpanded(id?: string) {
   expandedContentIds.value = [...expandedContentIds.value, id];
 }
 
+function getKanbanColumnItems(key: string) {
+  return campaignKanbanColumns.value[key as 'backlog' | 'review' | 'optimizing' | 'execution'];
+}
+
+async function openKanbanCampaign(campaign: { id: string; brand_name: string; goal: string; status: string }) {
+  if (campaign.status.toLowerCase().includes('review')) {
+    kanbanModalOpen.value = true;
+    kanbanModalCampaign.value = campaign;
+    kanbanModalLoading.value = true;
+    try {
+      kanbanModalPosts.value = await loadCampaignPostsForKanban(campaign.id);
+    } finally {
+      kanbanModalLoading.value = false;
+    }
+  }
+}
+
+async function approveKanbanCampaign() {
+  if (!kanbanModalCampaign.value) return;
+  selectedCampaignId.value = kanbanModalCampaign.value.id;
+  await submitCampaignReview(true);
+  kanbanModalOpen.value = false;
+}
+
+async function rejectKanbanCampaign() {
+  if (!kanbanModalCampaign.value) return;
+  selectedCampaignId.value = kanbanModalCampaign.value.id;
+  await submitCampaignReview(false);
+  kanbanModalOpen.value = false;
+}
+
+function closeKanbanModal() {
+  kanbanModalOpen.value = false;
+  kanbanModalCampaign.value = null;
+  kanbanModalPosts.value = [];
+}
+
 const navItems = [
   { id: 'home', label: 'Home', icon: 'home' },
   { id: 'campaigns', label: 'Campaigns', icon: 'campaigns' },
+  { id: 'kanban', label: 'Kanban', icon: 'kanban' },
   { id: 'contents', label: 'Contents', icon: 'contents' },
 ] as const;
+
+watch(activeSection, (section) => {
+  if (section === 'kanban' && isLeftNavExpanded) {
+    toggleLeftNav();
+  }
+});
 </script>
 
 <template>
@@ -325,6 +393,17 @@ const navItems = [
                 <path d="M8 3v4M16 3v4M4 10h16" />
               </svg>
               <svg
+                v-else-if="item.icon === 'kanban'"
+                viewBox="0 0 24 24"
+                fill="none"
+                stroke="currentColor"
+                stroke-width="1.8"
+                class="h-4 w-4"
+              >
+                <rect x="4" y="5" width="16" height="14" rx="2" />
+                <path d="M9 5v14M15 5v14" />
+              </svg>
+              <svg
                 v-else
                 viewBox="0 0 24 24"
                 fill="none"
@@ -356,6 +435,7 @@ const navItems = [
         </div>
 
         <section
+          v-if="activeSection !== 'kanban'"
           class="rounded-[2rem] border border-line bg-gradient-to-r from-white via-[#f8faf5] to-[#edf4eb] px-6 py-6 shadow-panel"
         >
           <div class="flex flex-col gap-5 xl:flex-row xl:items-end xl:justify-between">
@@ -861,6 +941,198 @@ const navItems = [
               </div>
             </SectionCard>
           </div>
+        </template>
+
+        <template v-else-if="activeSection === 'kanban'">
+          <SectionCard
+            title="Kanban"
+            subtitle="Campaign status board powered by /campaign and refreshed on demand."
+          >
+            <div class="mb-6 flex flex-col gap-5 rounded-[1.75rem] border border-line bg-white p-5 text-ink shadow-panel xl:flex-row xl:items-end xl:justify-between">
+              <div>
+                <p class="text-xs uppercase tracking-[0.24em] text-mute">Agent pulse</p>
+                <h3 class="mt-2 text-lg font-semibold">
+                  {{ selectedKanbanCampaignId === 'all' ? 'All campaigns' : 'Campaign selected' }}
+                </h3>
+                <p class="mt-2 max-w-2xl text-sm leading-6 text-mute">
+                  {{ selectedKanbanCampaignId === 'all' ? 'Showing every campaign grouped by status.' : 'Showing a single campaign grouped by its current status.' }}
+                </p>
+              </div>
+
+              <div class="flex flex-col gap-3 sm:flex-row sm:items-end">
+                <label class="block w-full sm:w-[18rem]">
+                  <span class="mb-2 block text-[10px] uppercase tracking-[0.2em] text-mute">
+                    Campaign
+                  </span>
+                  <select
+                    v-model="selectedKanbanCampaignId"
+                    class="block w-full rounded-2xl border border-line bg-white px-3 py-2 text-sm text-ink outline-none transition focus:border-accent"
+                  >
+                    <option value="all">All</option>
+                    <option v-for="campaign in campaigns" :key="campaign.id" :value="campaign.id">
+                      {{ campaign.goal }}
+                    </option>
+                  </select>
+                </label>
+
+                <button
+                  class="inline-flex items-center justify-center gap-2 rounded-full border border-line bg-accent-soft px-4 py-2 text-sm font-medium text-accent transition hover:bg-glow"
+                  @click="refreshDashboard"
+                >
+                  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" class="h-4 w-4">
+                    <path d="M20 12a8 8 0 10-2.34 5.66" />
+                    <path d="M20 7v5h-5" />
+                  </svg>
+                  Refresh
+                </button>
+              </div>
+            </div>
+
+            <div class="mb-6 grid gap-4 sm:grid-cols-2 xl:grid-cols-4">
+              <div class="rounded-[1.75rem] border border-line bg-white p-5 shadow-panel">
+                <p class="text-xs uppercase tracking-[0.22em] text-mute">Total tasks</p>
+                <p class="mt-3 text-3xl font-semibold text-ink">{{ getKanbanStats().total }}</p>
+              </div>
+              <div class="rounded-[1.75rem] border border-line bg-white p-5 shadow-panel">
+                <p class="text-xs uppercase tracking-[0.22em] text-mute">Completed</p>
+                <p class="mt-3 text-3xl font-semibold text-ink">{{ getKanbanStats().completed }}</p>
+              </div>
+              <div class="rounded-[1.75rem] border border-line bg-white p-5 shadow-panel">
+                <p class="text-xs uppercase tracking-[0.22em] text-mute">In progress</p>
+                <p class="mt-3 text-3xl font-semibold text-ink">{{ getKanbanStats().inProgress }}</p>
+              </div>
+              <div class="rounded-[1.75rem] border border-line bg-white p-5 shadow-panel">
+                <p class="text-xs uppercase tracking-[0.22em] text-mute">Pending</p>
+                <p class="mt-3 text-3xl font-semibold text-ink">{{ getKanbanStats().pending }}</p>
+              </div>
+            </div>
+
+            <div class="mb-6 rounded-[1.75rem] border border-line bg-white p-5 shadow-panel">
+              <div class="flex items-center justify-between">
+                <p class="text-xs uppercase tracking-[0.22em] text-mute">Overall progress</p>
+                <p class="text-sm font-medium text-ink">{{ getKanbanStats().progress }}%</p>
+              </div>
+              <div class="mt-4 h-3 overflow-hidden rounded-full bg-[#eef2ea]">
+                <div
+                  class="h-full rounded-full bg-accent transition-all duration-500"
+                  :style="{ width: `${getKanbanStats().progress}%` }"
+                />
+              </div>
+            </div>
+
+            <div v-if="campaigns.length === 0" class="rounded-3xl border border-dashed border-line p-6 text-sm text-mute">
+              No campaigns found for this brand yet.
+            </div>
+
+            <div v-else class="grid gap-4 xl:grid-cols-4">
+              <div
+                v-for="column in kanbanColumns"
+                :key="column.key"
+                class="rounded-[1.75rem] border border-line p-4"
+                :class="column.tone"
+              >
+                <div class="mb-4">
+                  <p class="text-xs uppercase tracking-[0.24em] text-mute">{{ column.label }}</p>
+                  <p class="mt-2 text-sm text-mute">{{ column.helper }}</p>
+                </div>
+
+                <div class="space-y-3">
+                  <div
+                    v-for="campaign in getKanbanColumnItems(column.key)"
+                    :key="campaign.id"
+                    class="cursor-pointer rounded-3xl border border-line bg-white p-4 shadow-sm transition duration-300 hover:-translate-y-0.5 hover:border-accent/40 hover:shadow-lg"
+                    @click="openKanbanCampaign(campaign)"
+                  >
+                    <div class="flex items-start justify-between gap-3">
+                      <div class="min-w-0">
+                        <p class="text-[10px] uppercase tracking-[0.18em] text-mute">
+                          {{ campaign.brand_name }}
+                        </p>
+                        <h3 class="mt-2 text-sm font-semibold text-ink">{{ campaign.goal }}</h3>
+                      </div>
+                      <span class="rounded-full bg-accent-soft px-2.5 py-1 text-[10px] font-medium text-accent">
+                        {{ campaign.status }}
+                      </span>
+                    </div>
+
+                    <div v-if="column.key === 'execution'" class="mt-4 flex items-center gap-2 text-xs text-mute">
+                      <span class="inline-flex h-2 w-2 animate-pulse rounded-full bg-accent"></span>
+                      AI Writing...
+                    </div>
+                  </div>
+
+                  <div
+                    v-if="getKanbanColumnItems(column.key).length === 0"
+                    class="rounded-3xl border border-dashed border-line px-4 py-6 text-sm text-mute"
+                  >
+                    No active tasks.
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            <Transition name="fade">
+              <div
+                v-if="kanbanModalOpen && kanbanModalCampaign"
+                class="fixed inset-0 z-50 flex items-center justify-center bg-black/55 px-4 py-6"
+              >
+                <div class="w-full max-w-4xl rounded-[2rem] bg-white p-6 shadow-2xl">
+                  <div class="flex items-start justify-between gap-4">
+                    <div>
+                      <p class="text-xs uppercase tracking-[0.24em] text-mute">Campaign review</p>
+                      <h3 class="mt-2 text-2xl font-semibold text-ink">{{ kanbanModalCampaign.goal }}</h3>
+                      <p class="mt-2 text-sm text-mute">{{ kanbanModalCampaign.brand_name }} • {{ kanbanModalCampaign.status }}</p>
+                    </div>
+                    <button class="rounded-full border border-line px-3 py-1 text-sm text-ink" @click="closeKanbanModal">
+                      Close
+                    </button>
+                  </div>
+
+                  <div class="mt-6">
+                    <div v-if="kanbanModalLoading" class="rounded-3xl border border-dashed border-line p-6 text-sm text-mute">
+                      Loading planned posts...
+                    </div>
+
+                    <div v-else class="space-y-3">
+                      <div v-if="kanbanModalPosts.length === 0" class="rounded-3xl border border-dashed border-line p-6 text-sm text-mute">
+                        No planned posts found for this campaign.
+                      </div>
+
+                      <div v-else class="overflow-hidden rounded-3xl border border-line">
+                        <table class="w-full text-left text-sm">
+                          <thead class="bg-[#f8faf5] text-xs uppercase tracking-[0.18em] text-mute">
+                            <tr>
+                              <th class="px-4 py-3">Day</th>
+                              <th class="px-4 py-3">Platform</th>
+                              <th class="px-4 py-3">Angle</th>
+                              <th class="px-4 py-3">Status</th>
+                            </tr>
+                          </thead>
+                          <tbody>
+                            <tr v-for="post in kanbanModalPosts" :key="post.id" class="border-t border-line">
+                              <td class="px-4 py-3 text-mute">{{ post.scheduled_day }}</td>
+                              <td class="px-4 py-3 text-ink">{{ post.platform }}</td>
+                              <td class="px-4 py-3 text-ink">{{ post.angle }}</td>
+                              <td class="px-4 py-3 text-mute">{{ post.status }}</td>
+                            </tr>
+                          </tbody>
+                        </table>
+                      </div>
+                    </div>
+                  </div>
+
+                  <div class="mt-6 flex justify-end gap-3">
+                    <button class="rounded-full border border-line px-4 py-2 text-sm text-ink" @click="rejectKanbanCampaign">
+                      Reject
+                    </button>
+                    <button class="rounded-full bg-accent px-4 py-2 text-sm font-medium text-white" @click="approveKanbanCampaign">
+                      Approve
+                    </button>
+                  </div>
+                </div>
+              </div>
+            </Transition>
+          </SectionCard>
         </template>
 
         <template v-else>

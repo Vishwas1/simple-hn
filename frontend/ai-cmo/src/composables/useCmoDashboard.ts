@@ -13,7 +13,7 @@ import type {
   ListBrandProfilesResponse,
 } from '../types/api';
 
-type DashboardSection = 'home' | 'campaigns' | 'contents';
+type DashboardSection = 'home' | 'campaigns' | 'contents' | 'kanban';
 
 type CampaignReview = {
   campaignId: string;
@@ -89,6 +89,7 @@ export function useCmoDashboard() {
   const brandProfile = ref<BrandProfile | null>(null);
   const campaigns = ref<CampaignRecord[]>([]);
   const selectedCampaignId = ref('');
+  const selectedKanbanCampaignId = ref('all');
   const contentCampaignFilter = ref('all');
   const postsByCampaignId = ref<Record<string, CampaignPost[]>>({});
   const contentsByCampaignId = ref<Record<string, Record<string, PostContentStatus>>>({});
@@ -113,6 +114,18 @@ export function useCmoDashboard() {
 
   const selectedCampaign = computed(
     () => campaigns.value.find((campaign) => campaign.id === selectedCampaignId.value) || null,
+  );
+
+  const selectedKanbanCampaign = computed(() =>
+    selectedKanbanCampaignId.value === 'all'
+      ? null
+      : campaigns.value.find((campaign) => campaign.id === selectedKanbanCampaignId.value) || null,
+  );
+
+  const selectedKanbanCampaigns = computed(() =>
+    selectedKanbanCampaignId.value === 'all'
+      ? campaigns.value
+      : campaigns.value.filter((campaign) => campaign.id === selectedKanbanCampaignId.value),
   );
 
   const posts = computed(() => postsByCampaignId.value[selectedCampaignId.value] || []);
@@ -180,6 +193,109 @@ export function useCmoDashboard() {
         contentStatus: content?.content_status || 'pending',
       };
     });
+  });
+
+  const contentKanbanColumns = computed(() => {
+    const sourcePosts =
+      selectedKanbanCampaignId.value === 'all'
+        ? Object.values(postsByCampaignId.value).flat()
+        : postsByCampaignId.value[selectedKanbanCampaignId.value] || [];
+    const sourceContents =
+      selectedKanbanCampaignId.value === 'all'
+        ? Object.values(contentsByCampaignId.value).flatMap((campaignContents) =>
+            Object.values(campaignContents),
+          )
+        : Object.values(contentsByCampaignId.value[selectedKanbanCampaignId.value] || {});
+
+    const contentByPostId = new Map(
+      sourceContents
+        .filter((content): content is PostContentStatus & { campaign_post_id: string } =>
+          typeof content.campaign_post_id === 'string' && content.campaign_post_id.length > 0,
+        )
+        .map((content) => [content.campaign_post_id, content] as const),
+    );
+
+    const scopedItems = sourcePosts.map((post) => {
+      const content = post.id ? contentByPostId.get(post.id) : undefined;
+
+      return {
+        id: post.id,
+        title: post.angle,
+        description: post.direction,
+        platform: post.platform,
+        phase: post.phase,
+        status: post.status,
+        postDate: post.post_date,
+        campaignId: post.campaign_id,
+        contentBody: content?.content_body || '',
+        generatedAt: content?.generated_at || '',
+        keywords: content?.keywords || [],
+        hashtags: content?.hashtags || [],
+        contentStatus: content?.content_status || 'pending',
+      };
+    });
+
+    const columns = {
+      backlog: [] as Array<(typeof scopedItems)[number]>,
+      review: [] as Array<(typeof scopedItems)[number]>,
+      optimizing: [] as Array<(typeof scopedItems)[number]>,
+      execution: [] as Array<(typeof scopedItems)[number]>,
+      done: [] as Array<(typeof scopedItems)[number]>,
+    };
+
+    for (const item of scopedItems) {
+      const hasBody = Boolean(item.contentBody.trim());
+      const hasSeoSignals = item.keywords.length > 0 || item.hashtags.length > 0;
+      const isDone = item.contentStatus === 'completed' || (hasBody && hasSeoSignals);
+      const isExecution = item.contentStatus === 'processing' || (hasBody && !isDone);
+      const isOptimizing = !hasBody && hasSeoSignals;
+
+      if (isDone) {
+        columns.done.push(item);
+      } else if (isExecution) {
+        columns.execution.push(item);
+      } else if (isOptimizing) {
+        columns.optimizing.push(item);
+      } else if (item.contentStatus === 'pending' || item.status === 'draft') {
+        columns.backlog.push(item);
+      } else {
+        columns.review.push(item);
+      }
+    }
+
+    return columns;
+  });
+
+  const campaignKanbanColumns = computed(() => {
+    const columns = {
+      backlog: [] as CampaignRecord[],
+      review: [] as CampaignRecord[],
+      optimizing: [] as CampaignRecord[],
+      execution: [] as CampaignRecord[],
+      done: [] as CampaignRecord[],
+    };
+
+    for (const campaign of selectedKanbanCampaigns.value) {
+      const status = campaign.status.toLowerCase();
+
+      if (status.includes('done') || status.includes('complete')) {
+        columns.done.push(campaign);
+      } else if (status.includes('human_review') || status.includes('review')) {
+        columns.review.push(campaign);
+      } else if (status.includes('seo')) {
+        columns.optimizing.push(campaign);
+      } else if (
+        status.includes('writer') ||
+        status.includes('processing') ||
+        status.includes('executing')
+      ) {
+        columns.execution.push(campaign);
+      } else {
+        columns.backlog.push(campaign);
+      }
+    }
+
+    return columns;
   });
 
   const selectedBrandKey = computed(() =>
@@ -252,6 +368,13 @@ export function useCmoDashboard() {
     if (!campaigns.value.some((campaign) => campaign.id === selectedCampaignId.value)) {
       selectedCampaignId.value = campaigns.value[0]?.id || '';
     }
+
+    if (
+      selectedKanbanCampaignId.value !== 'all' &&
+      !campaigns.value.some((campaign) => campaign.id === selectedKanbanCampaignId.value)
+    ) {
+      selectedKanbanCampaignId.value = campaigns.value[0]?.id || 'all';
+    }
   }
 
   async function loadPosts(campaignId = selectedCampaignId.value) {
@@ -297,6 +420,10 @@ export function useCmoDashboard() {
     };
 
     return nextContents;
+  }
+
+  async function loadCampaignPostsForKanban(campaignId: string) {
+    return loadPosts(campaignId);
   }
 
   function clearPostPolling(campaignId: string) {
@@ -566,6 +693,7 @@ export function useCmoDashboard() {
     postsByCampaignId.value = {};
     contentsByCampaignId.value = {};
     selectedCampaignId.value = '';
+    selectedKanbanCampaignId.value = 'all';
     contentCampaignFilter.value = 'all';
     campaignReview.value = null;
     approvedCampaignId.value = '';
@@ -606,6 +734,7 @@ export function useCmoDashboard() {
     campaignReview,
     campaigns,
     contentItems,
+    contentKanbanColumns,
     contentsByCampaignId,
     dashboardStats,
     error,
@@ -623,6 +752,10 @@ export function useCmoDashboard() {
     selectedBrandKey,
     selectedCampaignId,
     selectedCampaign,
+    selectedKanbanCampaign,
+    selectedKanbanCampaigns,
+    selectedKanbanCampaignId,
+    campaignKanbanColumns,
     selectedWorkspaceId,
     submitting,
     successMessage,
@@ -647,5 +780,6 @@ export function useCmoDashboard() {
     isSeoComplete,
     isWriterComplete,
     approvedCampaignId,
+    loadCampaignPostsForKanban,
   };
 }

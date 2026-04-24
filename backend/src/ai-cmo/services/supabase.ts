@@ -142,6 +142,13 @@ export type SearchContentResponse = {
   results?: SearchContentResult[];
 };
 
+export type LangraphStateRecord = {
+  id: string;
+  pulse: string;
+  objective: string;
+  brandName: string;
+};
+
 export type CreateCampaignRequest = {
   workspace_id?: string;
   brand_name: string;
@@ -339,5 +346,10 @@ export const supabaseService = {
   // so that it does not repeat
   async searchContent(payload: SearchContentRequest) {
     return request<SearchContentResponse>('POST', '/search-content', { body: payload });
+  },
+
+  // Get the live LangGraph state pulse records
+  async getLangraphState() {
+    return request<LangraphStateRecord[]>('GET', '/langraph-state');
   },
 };

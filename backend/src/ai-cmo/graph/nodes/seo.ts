@@ -1,44 +1,10 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
-// import { RunnableConfig } from '@langchain/core/runnables';
 import { supabaseService } from '../../services/supabase';
 import { llm } from '../llm';
 import { CMOState } from '../state';
-// import { supabaseService } from '../../services/supabase';
 
 export const seoNode = async (state: typeof CMOState.State) => {
   console.log('--- Agent: SEO Specialist generating metadata ---');
-  // const campaignId = config.configurable?.thread_id;
-
-  // 2. SYNC POSTS WITH SUPABASE
-  // let postsWithIds: any[] = [];
-
-  // if (campaignId) {
-  //   console.log(`--- System: Saving Posts for Campaign ${campaignId} ---`);
-
-  //   // Call the service with the strictly defined Request type
-  //   const result = await supabaseService.saveCampaignPosts({
-  //     campaign_id: campaignId,
-  //     posts: state.posts.map((post) => ({
-  //       phase: post.phase,
-  //       platform: post.platform,
-  //       angle: post.angle,
-  //       direction: post.direction,
-  //       post_date: post.post_date,
-  //       scheduled_day: post.scheduled_day,
-  //     })),
-  //   });
-
-  //   // Handle the specific SaveCampaignPostsResponse structure
-  //   if (result.success) {
-  //     postsWithIds = result.posts;
-  //     console.log(`--- System: Successfully synced ${result.count} posts ---`);
-  //   } else {
-  //     console.error('--- Error: Failed to save posts to Supabase ---');
-  //     // Fallback to existing state if DB sync fails (to keep graph moving)
-  //     postsWithIds = state.posts;
-  //   }
-  // }
-
   const brand = await supabaseService.getBrandProfile({
     workspace_id: state.workspace_id,
     brand_name: state.brand_name,

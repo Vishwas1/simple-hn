@@ -53,11 +53,16 @@ function formatDate(value?: string) {
     return 'Not scheduled';
   }
 
+  const parsed = new Date(value);
+  if (Number.isNaN(parsed.getTime())) {
+    return 'Not scheduled';
+  }
+
   return new Intl.DateTimeFormat('en', {
     month: 'short',
     day: 'numeric',
     year: 'numeric',
-  }).format(new Date(value));
+  }).format(parsed);
 }
 
 function trimCopy(value?: string, fallback = 'No details yet.') {
